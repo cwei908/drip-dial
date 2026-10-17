@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drip Dial | 手沖咖啡風味與沖煮參數助手</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            coffee: {
+              50: '#FDF8F5',
+              100: '#F7EFEA',
+              200: '#EBDCD0',
+              300: '#D5BEAB',
+              500: '#A47854',
+              700: '#6C4830',
+              800: '#483020',
+              900: '#2C1A10'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* 隱藏原生 number input 箭頭 */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+  </style>
+</head>
+<body class="bg-coffee-50 text-coffee-900 min-h-screen flex flex-col font-sans selection:bg-coffee-300">
+
+  <!-- Header -->
+  <header class="border-b border-coffee-200 bg-white/70 backdrop-blur-md sticky top-0 z-30">
+    <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <span class="text-2xl">☕</span>
+        <h1 class="font-bold text-xl tracking-tight text-coffee-900">Drip Dial</h1>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-coffee-200 text-coffee-800 font-medium">Vibe Beta</span>
+      </div>
+      <div class="text-xs text-coffee-700 font-medium">手沖風味與狀態機計時器</div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-4xl mx-auto px-4 py-8 flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-8">
+    
+    <!-- 左側：參數配置與動態換算區 (5 Cols) -->
+    <section class="lg:col-span-5 flex flex-col gap-6">
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-coffee-200">
+        <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+          <span>⚙️</span> 沖煮偏好設定
+        </h2>
+
+        <!-- 烘焙度選擇 -->
+        <div class="mb-5">
+          <label class="block text-xs font-semibold text-coffee-700 uppercase tracking-wider mb-2">烘焙度 (Roast Level)</label>
+          <div class="grid grid-cols-3 gap-2" id="roast-group">
+            <button type="button" data-val="light" class="roast-btn py-2 text-sm font-medium rounded-xl border border-coffee-200 transition-all text-center">淺焙</button>
+            <button type="button" data-val="medium" class="roast-btn py-2 text-sm font-medium rounded-xl border border-coffee-200 transition-all text-center">中焙</button>
+            <button type="button" data-val="dark" class="roast-btn py-2 text-sm font-medium rounded-xl border border-coffee-200 transition-all text-center">深焙</button>
+          </div>
+        </div>
+
+        <!-- 風味偏好選擇 -->
+        <div class="mb-5">
+          <label class="block text-xs font-semibold text-coffee-700 uppercase tracking-wider mb-2">風味取向 (Flavor Goal)</label>
+          <div class="grid grid-cols-3 gap-2" id="flavor-group">
+            <button type="button" data-val="acidity" class="flavor-btn py-2 text-xs font-medium rounded-xl border border-coffee-200 transition-all text-center">明亮酸香</button>
+            <button type="button" data-val="sweet" class="flavor-btn py-2 text-xs font-medium rounded-xl border border-coffee-200 transition-all text-center">均衡甜感</button>
+            <button type="button" data-val="body" class="flavor-btn py-2 text-xs font-medium rounded-xl border border-coffee-200 transition-all text-center">厚實醇厚</button>
+          </div>
+        </div>
+
+        <!-- 咖啡豆克數輸入 -->
+        <div>
+          <label class="block text-xs font-semibold text-coffee-700 uppercase tracking-wider mb-2">咖啡粉重 (Dose)</label>
+          <div class="flex items-center border border-coffee-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-coffee-500">
+            <button type="button" id="btn-dose-dec" class="px-4 py-2.5 bg-coffee-100 hover:bg-coffee-200 font-bold transition-colors">-</button>
+            <input type="number" id="dose-input" value="15" min="10" max="30" step="0.5" class="w-full text-center font-bold text-coffee-900 outline-none text-lg bg-transparent" />
+            <span class="pr-3 text-sm text-coffee-700 font-medium">g</span>
+            <button type="button" id="btn-dose-inc" class="px-4 py-2.5 bg-coffee-100 hover:bg-coffee-200 font-bold transition-colors">+</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 換算推薦參數卡 -->
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-coffee-200 flex flex-col gap-4">
+        <h2 class="text-lg font-bold flex items-center justify-between">
+          <span class="flex items-center gap-2"><span>📊</span> 推薦沖煮參數</span>
+          <span id="param-ratio-badge" class="text-xs bg-coffee-100 text-coffee-800 px-2.5 py-1 rounded-full font-bold">1:16</span>
+        </h2>
+
+        <div class="grid grid-cols-2 gap-3 text-center">
+          <div class="p-3 bg-coffee-50 rounded-xl border border-coffee-100">
+            <div class="text-xs text-coffee-700 font-medium mb-1">目標總水量</div>
+            <div class="text-2xl font-black text-coffee-900" id="calc-total-water">240<span class="text-sm font-normal">g</span></div>
+          </div>
+          <div class="p-3 bg-coffee-50 rounded-xl border border-coffee-100">
+            <div class="text-xs text-coffee-700 font-medium mb-1">建議水溫</div>
+            <div class="text-2xl font-black text-coffee-900" id="calc-temp">92<span class="text-sm font-normal">°C</span></div>
+          </div>
+        </div>
+
+        <div class="p-3 bg-coffee-50 rounded-xl border border-coffee-100 flex items-center justify-between">
+          <div class="text-xs text-coffee-700 font-medium">建議研磨刻度</div>
+          <div class="text-sm font-bold text-coffee-900 text-right" id="calc-grind">中度（白砂糖粗細）</div>
+        </div>
+
+        <!-- 分段注水量預覽 -->
+        <div class="border-t border-coffee-100 pt-3">
+          <div class="text-xs font-semibold text-coffee-700 mb-2">3 階段配水規劃</div>
+          <div class="flex items-center justify-between text-xs text-coffee-800 font-medium bg-coffee-100/60 p-2.5 rounded-lg">
+            <div>悶蒸: <span id="plan-stage-1" class="font-bold text-coffee-900">35g</span></div>
+            <div>一段: <span id="plan-stage-2" class="font-bold text-coffee-900">140g</span></div>
+            <div>二段: <span id="plan-stage-3" class="font-bold text-coffee-900">240g</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 右側：階段注水狀態機計時器 (7 Cols) -->
+    <section class="lg:col-span-7 flex flex-col">
+      <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-coffee-200 flex flex-col justify-between h-full relative overflow-hidden">
+        
+        <!-- 當前狀態與階段標籤 -->
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" id="status-indicator"></span>
+            <span class="text-xs uppercase font-bold tracking-wider text-coffee-700" id="status-badge">準備就緒 (IDLE)</span>
+          </div>
+          <div class="text-xs text-coffee-700 font-medium" id="audio-status-label">🔊 音效提示已啟動</div>
+        </div>
+
+        <!-- 核心注水引導資訊 -->
+        <div class="text-center my-auto py-6">
+          <div class="text-sm font-semibold tracking-wide text-coffee-700 uppercase" id="current-stage-title">STEP 0：等待啟動</div>
+          
+          <!-- 大字當前目標水量 -->
+          <div class="my-4">
+            <span class="text-xs text-coffee-500 font-bold block mb-1">目標注水累計至</span>
+            <div class="text-5xl sm:text-6xl font-black tracking-tight text-coffee-900" id="current-target-weight">
+              0 <span class="text-2xl font-bold text-coffee-500">g</span>
+            </div>
+          </div>
+
+          <!-- 計時數字 -->
+          <div class="text-3xl font-mono font-bold text-coffee-800" id="timer-display">00:00</div>
+          <div class="text-xs text-coffee-700 mt-1 font-mono" id="stage-remaining-display">階段剩餘: -- 秒</div>
+
+          <!-- 指引提示 -->
+          <p class="mt-6 text-sm text-coffee-700 max-w-sm mx-auto min-h-[40px] flex items-center justify-center font-medium px-4" id="stage-instruction">
+            確認咖啡粉已整平，點擊「開始沖煮」進入悶蒸階段。
+          </p>
+        </div>
+
+        <!-- 階段進度條 -->
+        <div class="space-y-2 mb-6">
+          <div class="flex justify-between text-xs font-semibold text-coffee-700">
+            <span>整體沖煮進度</span>
+            <span id="overall-percentage">0%</span>
+          </div>
+          <div class="w-full h-3 bg-coffee-100 rounded-full overflow-hidden">
+            <div id="progress-bar-fill" class="h-full bg-coffee-700 transition-all duration-300 w-0"></div>
+          </div>
+          <div class="grid grid-cols-3 text-[11px] text-center text-coffee-700 font-medium pt-1">
+            <span id="label-step-1" class="transition-colors">1. 悶蒸 (40s)</span>
+            <span id="label-step-2" class="transition-colors">2. 一段萃取 (40s)</span>
+            <span id="label-step-3" class="transition-colors">3. 二段平衡 (55s)</span>
+          </div>
+        </div>
+
+        <!-- 操控按鈕群組 -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <button type="button" id="btn-main-action" class="col-span-1 sm:col-span-2 py-3.5 px-6 rounded-xl font-bold text-white bg-coffee-800 hover:bg-coffee-900 transition-all shadow-md active:scale-[0.98]">
+            開始沖煮
+          </button>
+          <div class="flex gap-2">
+            <button type="button" id="btn-next-stage" disabled class="flex-1 py-3.5 px-2 rounded-xl font-semibold border border-coffee-300 text-coffee-800 hover:bg-coffee-100 transition-all disabled:opacity-40 disabled:pointer-events-none text-xs">
+              下個階段 ❯
+            </button>
+            <button type="button" id="btn-reset" class="px-4 py-3.5 rounded-xl font-semibold border border-coffee-200 text-coffee-700 hover:bg-coffee-100 transition-all text-xs">
+              重置
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="py-6 border-t border-coffee-200 text-center text-xs text-coffee-700">
+    Drip Dial 沖煮實驗室 &copy; 2026. Built with Vanilla JS & Web Audio.
+  </footer>
+
+  <!-- JavaScript 邏輯 -->
+  <script>
+    // --- 1. 參數資料與對照矩陣 ---
+    const RECIPES = {
+      light: {
+        acidity: { ratio: 16.5, temp: 93, grind: '中細（精鹽粗細）', splits: [0.15, 0.45, 0.40] },
+        sweet:   { ratio: 16.0, temp: 92, grind: '中度（白砂糖粗細）', splits: [0.15, 0.45, 0.40] },
+        body:    { ratio: 15.5, temp: 91, grind: '中度（白砂糖粗細）', splits: [0.18, 0.42, 0.40] }
+      },
+      medium: {
+        acidity: { ratio: 16.0, temp: 91, grind: '中度（白砂糖粗細）', splits: [0.15, 0.45, 0.40] },
+        sweet:   { ratio: 15.5, temp: 90, grind: '中度（白砂糖粗細）', splits: [0.15, 0.45, 0.40] },
+        body:    { ratio: 15.0, temp: 89, grind: '中粗（二砂粗細）',   splits: [0.20, 0.40, 0.40] }
+      },
+      dark: {
+        acidity: { ratio: 15.0, temp: 88, grind: '中粗（二砂粗細）',   splits: [0.15, 0.45, 0.40] },
+        sweet:   { ratio: 14.5, temp: 88, grind: '中粗（二砂粗細）',   splits: [0.15, 0.45, 0.40] },
+        body:    { ratio: 14.0, temp: 86, grind: '中粗（粗砂粗細）',   splits: [0.20, 0.40, 0.40] }
+      }
+    };
+
+    // --- 2. 狀態管理 ---
+    const state = {
+      roast: 'medium',
+      flavor: 'sweet',
+      dose: 15,
+      calculated: null,
+      
+      // 狀態機: IDLE, RUNNING, PAUSED, FINISHED
+      timerState: 'IDLE',
+      currentStageIndex: 0, // 0: 悶蒸, 1: 一段, 2: 二段
+      elapsedSeconds: 0,
+      stageElapsedSeconds: 0,
+      timerInterval: null
+    };
+
+    // 各階段時間規劃（秒）
+    const STAGE_CONFIGS = [
+      { id: 'bloom', name: 'STEP 1：悶蒸 (Blooming)', duration: 40, tip: '輕柔由中心向外繞圈潤濕所有咖啡粉，靜置排氣釋放二氧化碳。' },
+      { id: 'pour1', name: 'STEP 2：一段萃取 (Flavor)', duration: 40, tip: '維持平穩水流，由內向外均勻繞圈注水，帶出咖啡酸甜層次。' },
+      { id: 'pour2', name: 'STEP 3：二段平衡 (Body & Finish)', duration: 55, tip: '補足目標水量，保持液面高度，等待水流完整滴濾下落。' }
+    ];
+    const TOTAL_BREW_TIME = STAGE_CONFIGS.reduce((acc, cur) => acc + cur.duration, 0); // 135s
+
+    // --- 3. Web Audio API 音效生成器 ---
+    let audioCtx = null;
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playTone(freq, type = 'sine', duration = 0.15) {
+      try {
+        initAudio();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {
+        console.warn('Audio play prevented:', e);
+      }
+    }
+
+    // 階段轉換提示雙音
+    function playStageChangeTone() {
+      playTone(587.33, 'triangle', 0.12); // D5
+      setTimeout(() => playTone(880, 'triangle', 0.25), 130); // A5
+    }
+
+    // 完成祝賀和弦
+    function playFinishFanfare() {
+      const notes = [523.25, 659.25, 783.99, 1046.50]; // C Major
+      notes.forEach((freq, idx) => {
+        setTimeout(() => playTone(freq, 'sine', 0.35), idx * 120);
+      });
+    }
+
+    // 倒數提示單音
+    function playCountdownBeep() {
+      playTone(440, 'sine', 0.08); // A4
+    }
+
+    // --- 4. DOM 節點快取 ---
+    const roastBtns = document.querySelectorAll('.roast-btn');
+    const flavorBtns = document.querySelectorAll('.flavor-btn');
+    const doseInput = document.getElementById('dose-input');
+    const btnDoseDec = document.getElementById('btn-dose-dec');
+    const btnDoseInc = document.getElementById('btn-dose-inc');
+
+    const paramRatioBadge = document.getElementById('param-ratio-badge');
+    const calcTotalWater = document.getElementById('calc-total-water');
+    const calcTemp = document.getElementById('calc-temp');
+    const calcGrind = document.getElementById('calc-grind');
+    const planStage1 = document.getElementById('plan-stage-1');
+    const planStage2 = document.getElementById('plan-stage-2');
+    const planStage3 = document.getElementById('plan-stage-3');
+
+    const statusBadge = document.getElementById('status-badge');
+    const statusIndicator = document.getElementById('status-indicator');
+    const currentStageTitle = document.getElementById('current-stage-title');
+    const currentTargetWeight = document.getElementById('current-target-weight');
+    const timerDisplay = document.getElementById('timer-display');
+    const stageRemainingDisplay = document.getElementById('stage-remaining-display');
+    const stageInstruction = document.getElementById('stage-instruction');
+    const progressBarFill = document.getElementById('progress-bar-fill');
+    const overallPercentage = document.getElementById('overall-percentage');
+
+    const btnMainAction = document.getElementById('btn-main-action');
+    const btnNextStage = document.getElementById('btn-next-stage');
+    const btnReset = document.getElementById('btn-reset');
+
+    // --- 5. 邏輯換算函式 ---
+    function recalculateParams() {
+      const currentRecipe = RECIPES[state.roast][state.flavor];
+      const totalWater = Math.round(state.dose * currentRecipe.ratio);
+      
+      const s1 = Math.round(totalWater * currentRecipe.splits[0]);
+      const s2 = Math.round(totalWater * (currentRecipe.splits[0] + currentRecipe.splits[1]));
+      const s3 = totalWater;
+
+      state.calculated = {
+        ratio: currentRecipe.ratio,
+        temp: currentRecipe.temp,
+        grind: currentRecipe.grind,
+        totalWater,
+        stageTargets: [s1, s2, s3]
+      };
+
+      // 渲染換算結果
+      paramRatioBadge.textContent = `1:${currentRecipe.ratio}`;
+      calcTotalWater.innerHTML = `${totalWater}<span class="text-sm font-normal">g</span>`;
+      calcTemp.innerHTML = `${currentRecipe.temp}<span class="text-sm font-normal">°C</span>`;
+      calcGrind.textContent = currentRecipe.grind;
+      planStage1.textContent = `${s1}g`;
+      planStage2.textContent = `${s2}g`;
+      planStage3.textContent = `${s3}g`;
+
+      // 若目前為 IDLE 狀態，同步更新計時器預覽目標
+      if (state.timerState === 'IDLE') {
+        currentTargetWeight.innerHTML = `0 <span class="text-2xl font-bold text-coffee-500">g</span>`;
+      }
+    }
+
+    // --- 6. UI 切換渲染 ---
+    function updateButtonGroupUI() {
+      roastBtns.forEach(btn => {
+        const active = btn.dataset.val === state.roast;
+        btn.className = `roast-btn py-2 text-sm font-medium rounded-xl border transition-all text-center ${
+          active ? 'bg-coffee-800 text-white border-coffee-800 shadow-sm' : 'border-coffee-200 text-coffee-800 hover:bg-coffee-100'
+        }`;
+      });
+
+      flavorBtns.forEach(btn => {
+        const active = btn.dataset.val === state.flavor;
+        btn.className = `flavor-btn py-2 text-xs font-medium rounded-xl border transition-all text-center ${
+          active ? 'bg-coffee-800 text-white border-coffee-800 shadow-sm' : 'border-coffee-200 text-coffee-800 hover:bg-coffee-100'
+        }`;
+      });
+    }
+
+    // 格式化秒數為 mm:ss
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+      const s = (seconds % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    // --- 7. 計時器與狀態機核心 ---
+    function renderTimerUI() {
+      timerDisplay.textContent = formatTime(state.elapsedSeconds);
+
+      // 整體進度
+      const percent = Math.min(100, Math.round((state.elapsedSeconds / TOTAL_BREW_TIME) * 100));
+      progressBarFill.style.width = `${percent}%`;
+      overallPercentage.textContent = `${percent}%`;
+
+      // 標註高亮當前階段標籤
+      for (let i = 0; i < 3; i++) {
+        const label = document.getElementById(`label-step-${i + 1}`);
+        if (state.timerState === 'FINISHED') {
+          label.className = 'font-bold text-emerald-600';
+        } else if (state.timerState === 'IDLE') {
+          label.className = 'text-coffee-700';
+        } else if (i === state.currentStageIndex) {
+          label.className = 'font-bold text-coffee-900 underline';
+        } else if (i < state.currentStageIndex) {
+          label.className = 'text-coffee-400 line-through';
+        } else {
+          label.className = 'text-coffee-700';
+        }
+      }
+
+      if (state.timerState === 'IDLE') {
+        statusIndicator.className = 'w-3 h-3 rounded-full bg-coffee-300';
+        statusBadge.textContent = '準備就緒 (IDLE)';
+        currentStageTitle.textContent = 'STEP 0：等待啟動';
+        stageInstruction.textContent = '確認濾紙已貼合且咖啡粉已整平，點擊「開始沖煮」。';
+        stageRemainingDisplay.textContent = '階段剩餘: -- 秒';
+        btnMainAction.textContent = '開始沖煮';
+        btnMainAction.className = 'col-span-1 sm:col-span-2 py-3.5 px-6 rounded-xl font-bold text-white bg-coffee-800 hover:bg-coffee-900 transition-all shadow-md';
+        btnNextStage.disabled = true;
+        return;
+      }
+
+      if (state.timerState === 'PAUSED') {
+        statusIndicator.className = 'w-3 h-3 rounded-full bg-amber-500';
+        statusBadge.textContent = '已暫停 (PAUSED)';
+        btnMainAction.textContent = '繼續沖煮';
+        btnMainAction.className = 'col-span-1 sm:col-span-2 py-3.5 px-6 rounded-xl font-bold text-white bg-amber-600 hover:bg-amber-700 transition-all shadow-md';
+        return;
+      }
+
+      if (state.timerState === 'FINISHED') {
+        statusIndicator.className = 'w-3 h-3 rounded-full bg-emerald-500';
+        statusBadge.textContent = '沖煮完成 (COMPLETED)';
+        currentStageTitle.textContent = '🎉 沖煮完美完成';
+        currentTargetWeight.innerHTML = `${state.calculated.totalWater} <span class="text-2xl font-bold text-coffee-500">g</span>`;
+        stageRemainingDisplay.textContent = '所有階段滴漏完畢';
+        stageInstruction.textContent = '搖晃均勻下壺讓風味交融，倒出細細品嚐您的手沖咖啡！';
+        btnMainAction.textContent = '再次沖煮';
+        btnMainAction.className = 'col-span-1 sm:col-span-2 py-3.5 px-6 rounded-xl font-bold text-white bg-emerald-700 hover:bg-emerald-800 transition-all shadow-md';
+        btnNextStage.disabled = true;
+        return;
+      }
+
+      // RUNNING 狀態
+      statusIndicator.className = 'w-3 h-3 rounded-full bg-emerald-500 animate-pulse';
+      statusBadge.textContent = '沖煮萃取中 (BREWING)';
+      btnMainAction.textContent = '暫停計時';
+      btnMainAction.className = 'col-span-1 sm:col-span-2 py-3.5 px-6 rounded-xl font-bold text-white bg-amber-700 hover:bg-amber-800 transition-all shadow-md';
+      btnNextStage.disabled = false;
+
+      const currentStage = STAGE_CONFIGS[state.currentStageIndex];
+      const stageRemaining = Math.max(0, currentStage.duration - state.stageElapsedSeconds);
+
+      currentStageTitle.textContent = currentStage.name;
+      const targetWater = state.calculated.stageTargets[state.currentStageIndex];
+      currentTargetWeight.innerHTML = `${targetWater} <span class="text-2xl font-bold text-coffee-500">g</span>`;
+      stageInstruction.textContent = currentStage.tip;
+      stageRemainingDisplay.textContent = `階段剩餘: ${stageRemaining} 秒`;
+    }
+
+    function tick() {
+      state.elapsedSeconds++;
+      state.stageElapsedSeconds++;
+
+      const currentStage = STAGE_CONFIGS[state.currentStageIndex];
+      const remainingInStage = currentStage.duration - state.stageElapsedSeconds;
+
+      // 階段轉換前 3 秒倒數提示聲
+      if (remainingInStage <= 3 && remainingInStage > 0) {
+        playCountdownBeep();
+      }
+
+      // 當前階段時間結束
+      if (remainingInStage <= 0) {
+        if (state.currentStageIndex < 2) {
+          // 進入下一階段
+          state.currentStageIndex++;
+          state.stageElapsedSeconds = 0;
+          playStageChangeTone();
+        } else {
+          // 全部完成
+          finishBrewing();
+          return;
+        }
+      }
+
+      renderTimerUI();
+    }
+
+    function startTimer() {
+      initAudio();
+      state.timerState = 'RUNNING';
+      if (state.elapsedSeconds === 0) {
+        playStageChangeTone();
+      }
+      state.timerInterval = setInterval(tick, 1000);
+      renderTimerUI();
+    }
+
+    function pauseTimer() {
+      state.timerState = 'PAUSED';
+      clearInterval(state.timerInterval);
+      renderTimerUI();
+    }
+
+    function finishBrewing() {
+      clearInterval(state.timerInterval);
+      state.timerState = 'FINISHED';
+      playFinishFanfare();
+      renderTimerUI();
+    }
+
+    function resetTimer() {
+      clearInterval(state.timerInterval);
+      state.timerState = 'IDLE';
+      state.currentStageIndex = 0;
+      state.elapsedSeconds = 0;
+      state.stageElapsedSeconds = 0;
+      renderTimerUI();
+    }
+
+    function jumpToNextStage() {
+      if (state.timerState !== 'RUNNING') return;
+      if (state.currentStageIndex < 2) {
+        // 累計整體時間補齊
+        const currentConfig = STAGE_CONFIGS[state.currentStageIndex];
+        const skipDiff = currentConfig.duration - state.stageElapsedSeconds;
+        state.elapsedSeconds += skipDiff;
+        state.currentStageIndex++;
+        state.stageElapsedSeconds = 0;
+        playStageChangeTone();
+        renderTimerUI();
+      } else {
+        finishBrewing();
+      }
+    }
+
+    // --- 8. 事件監聽綁定 ---
+    roastBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.roast = btn.dataset.val;
+        updateButtonGroupUI();
+        recalculateParams();
+      });
+    });
+
+    flavorBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.flavor = btn.dataset.val;
+        updateButtonGroupUI();
+        recalculateParams();
+      });
+    });
+
+    doseInput.addEventListener('change', (e) => {
+      let val = parseFloat(e.target.value);
+      if (isNaN(val) || val < 10) val = 10;
+      if (val > 30) val = 30;
+      state.dose = val;
+      e.target.value = val;
+      recalculateParams();
+    });
+
+    btnDoseDec.addEventListener('click', () => {
+      if (state.dose > 10) {
+        state.dose = Math.max(10, state.dose - 1);
+        doseInput.value = state.dose;
+        recalculateParams();
+      }
+    });
+
+    btnDoseInc.addEventListener('click', () => {
+      if (state.dose < 30) {
+        state.dose = Math.min(30, state.dose + 1);
+        doseInput.value = state.dose;
+        recalculateParams();
+      }
+    });
+
+    btnMainAction.addEventListener('click', () => {
+      if (state.timerState === 'IDLE' || state.timerState === 'PAUSED') {
+        startTimer();
+      } else if (state.timerState === 'RUNNING') {
+        pauseTimer();
+      } else if (state.timerState === 'FINISHED') {
+        resetTimer();
+        startTimer();
+      }
+    });
+
+    btnNextStage.addEventListener('click', jumpToNextStage);
+    btnReset.addEventListener('click', resetTimer);
+
+    // --- 初始化執行 ---
+    updateButtonGroupUI();
+    recalculateParams();
+    renderTimerUI();
+  </script>
+</body>
+</html>
