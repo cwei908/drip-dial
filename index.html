@@ -1,600 +1,2029 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Drip Dial | 手沖咖啡風味與沖煮參數助手</title>
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            coffee: {
-              50: '#FDF8F5',
-              100: '#F7EFEA',
-              200: '#EBDCD0',
-              300: '#D5BEAB',
-              500: '#A47854',
-              700: '#6C4830',
-              800: '#483020',
-              900: '#2C1A10'
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>互動式手沖咖啡調整實驗室 | Pour-Over Coffee Dial-in Laboratory</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans TC"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        roast: {
+                            950: '#0b0908',
+                            900: '#14100e',
+                            800: '#211a16',
+                            700: '#332822',
+                            600: '#4a3930',
+                        },
+                        ambercup: {
+                            100: '#f9f3eb',
+                            200: '#efe0cc',
+                            300: '#e4c49c',
+                            400: '#d7a164',
+                            500: '#c9823b',
+                            600: '#a66226',
+                        }
+                    }
+                }
             }
-          }
         }
-      }
-    }
-  </script>
-  <style>
-    /* 隱藏原生 number input 箭頭 */
-    input[type=number]::-webkit-inner-spin-button, 
-    input[type=number]::-webkit-outer-spin-button { 
-      -webkit-appearance: none; 
-      margin: 0; 
-    }
-    input[type=number] {
-      -moz-appearance: textfield;
-    }
-  </style>
+    </script>
+    <style>
+        body {
+            background-color: #0b0908;
+            color: #f9f3eb;
+            overflow-x: hidden;
+        }
+        /* 自訂滑桿樣式 */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            height: 8px;
+            border-radius: 999px;
+            background: #211a16;
+            border: 1px solid #332822;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #d7a164;
+            border: 2px solid #f9f3eb;
+            margin-top: -7px;
+            box-shadow: 0 0 10px rgba(215, 161, 100, 0.6);
+            transition: transform 0.15s ease, background-color 0.15s ease;
+        }
+        input[type="range"]:hover::-webkit-slider-thumb {
+            transform: scale(1.15);
+            background: #e4c49c;
+        }
+        input[type="range"]::-moz-range-track {
+            height: 8px;
+            border-radius: 999px;
+            background: #211a16;
+            border: 1px solid #332822;
+        }
+        input[type="range"]::-moz-range-thumb {
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #d7a164;
+            border: 2px solid #f9f3eb;
+            box-shadow: 0 0 10px rgba(215, 161, 100, 0.6);
+            transition: transform 0.15s ease, background-color 0.15s ease;
+        }
+        .glass-panel {
+            background: rgba(20, 16, 14, 0.88);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(215, 161, 100, 0.18);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.75);
+        }
+        .amber-glow {
+            box-shadow: 0 0 22px rgba(215, 161, 100, 0.22);
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #14100e;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #332822;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #c9823b;
+        }
+    </style>
 </head>
-<body class="bg-coffee-50 text-coffee-900 min-h-screen flex flex-col font-sans selection:bg-coffee-300">
+<body class="min-h-screen flex flex-col selection:bg-ambercup-500 selection:text-roast-950">
 
-  <!-- Header -->
-  <header class="border-b border-coffee-200 bg-white/70 backdrop-blur-md sticky top-0 z-30">
-    <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-      <div class="flex items-center space-x-2">
-        <span class="text-2xl">☕</span>
-        <h1 class="font-bold text-xl tracking-tight text-coffee-900">Drip Dial</h1>
-        <span class="text-xs px-2 py-0.5 rounded-full bg-coffee-200 text-coffee-800 font-medium">Vibe Beta</span>
-      </div>
-      <div class="text-xs text-coffee-700 font-medium">手沖風味與狀態機計時器</div>
-    </div>
-  </header>
-
-  <!-- Main Container -->
-  <main class="max-w-4xl mx-auto px-4 py-8 flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-8">
-    
-    <!-- 左側：參數配置與動態換算區 (5 Cols) -->
-    <section class="lg:col-span-5 flex flex-col gap-6">
-      <div class="bg-white p-6 rounded-2xl shadow-sm border border-coffee-200">
-        <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
-          <span>⚙️</span> 沖煮偏好設定
-        </h2>
-
-        <!-- 烘焙度選擇 -->
-        <div class="mb-5">
-          <label class="block text-xs font-semibold text-coffee-700 uppercase tracking-wider mb-2">烘焙度 (Roast Level)</label>
-          <div class="grid grid-cols-3 gap-2" id="roast-group">
-            <button type="button" data-val="light" class="roast-btn py-2 text-sm font-medium rounded-xl border border-coffee-200 transition-all text-center">淺焙</button>
-            <button type="button" data-val="medium" class="roast-btn py-2 text-sm font-medium rounded-xl border border-coffee-200 transition-all text-center">中焙</button>
-            <button type="button" data-val="dark" class="roast-btn py-2 text-sm font-medium rounded-xl border border-coffee-200 transition-all text-center">深焙</button>
-          </div>
-        </div>
-
-        <!-- 風味偏好選擇 -->
-        <div class="mb-5">
-          <label class="block text-xs font-semibold text-coffee-700 uppercase tracking-wider mb-2">風味取向 (Flavor Goal)</label>
-          <div class="grid grid-cols-3 gap-2" id="flavor-group">
-            <button type="button" data-val="acidity" class="flavor-btn py-2 text-xs font-medium rounded-xl border border-coffee-200 transition-all text-center">明亮酸香</button>
-            <button type="button" data-val="sweet" class="flavor-btn py-2 text-xs font-medium rounded-xl border border-coffee-200 transition-all text-center">均衡甜感</button>
-            <button type="button" data-val="body" class="flavor-btn py-2 text-xs font-medium rounded-xl border border-coffee-200 transition-all text-center">厚實醇厚</button>
-          </div>
-        </div>
-
-        <!-- 咖啡豆克數輸入 -->
-        <div>
-          <label class="block text-xs font-semibold text-coffee-700 uppercase tracking-wider mb-2">咖啡粉重 (Dose)</label>
-          <div class="flex items-center border border-coffee-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-coffee-500">
-            <button type="button" id="btn-dose-dec" class="px-4 py-2.5 bg-coffee-100 hover:bg-coffee-200 font-bold transition-colors">-</button>
-            <input type="number" id="dose-input" value="15" min="10" max="30" step="0.5" class="w-full text-center font-bold text-coffee-900 outline-none text-lg bg-transparent" />
-            <span class="pr-3 text-sm text-coffee-700 font-medium">g</span>
-            <button type="button" id="btn-dose-inc" class="px-4 py-2.5 bg-coffee-100 hover:bg-coffee-200 font-bold transition-colors">+</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 換算推薦參數卡 -->
-      <div class="bg-white p-6 rounded-2xl shadow-sm border border-coffee-200 flex flex-col gap-4">
-        <h2 class="text-lg font-bold flex items-center justify-between">
-          <span class="flex items-center gap-2"><span>📊</span> 推薦沖煮參數</span>
-          <span id="param-ratio-badge" class="text-xs bg-coffee-100 text-coffee-800 px-2.5 py-1 rounded-full font-bold">1:16</span>
-        </h2>
-
-        <div class="grid grid-cols-2 gap-3 text-center">
-          <div class="p-3 bg-coffee-50 rounded-xl border border-coffee-100">
-            <div class="text-xs text-coffee-700 font-medium mb-1">目標總水量</div>
-            <div class="text-2xl font-black text-coffee-900" id="calc-total-water">240<span class="text-sm font-normal">g</span></div>
-          </div>
-          <div class="p-3 bg-coffee-50 rounded-xl border border-coffee-100">
-            <div class="text-xs text-coffee-700 font-medium mb-1">建議水溫</div>
-            <div class="text-2xl font-black text-coffee-900" id="calc-temp">92<span class="text-sm font-normal">°C</span></div>
-          </div>
-        </div>
-
-        <div class="p-3 bg-coffee-50 rounded-xl border border-coffee-100 flex items-center justify-between">
-          <div class="text-xs text-coffee-700 font-medium">建議研磨刻度</div>
-          <div class="text-sm font-bold text-coffee-900 text-right" id="calc-grind">中度（白砂糖粗細）</div>
-        </div>
-
-        <!-- 分段注水量預覽 -->
-        <div class="border-t border-coffee-100 pt-3">
-          <div class="text-xs font-semibold text-coffee-700 mb-2">3 階段配水規劃</div>
-          <div class="flex items-center justify-between text-xs text-coffee-800 font-medium bg-coffee-100/60 p-2.5 rounded-lg">
-            <div>悶蒸: <span id="plan-stage-1" class="font-bold text-coffee-900">35g</span></div>
-            <div>一段: <span id="plan-stage-2" class="font-bold text-coffee-900">140g</span></div>
-            <div>二段: <span id="plan-stage-3" class="font-bold text-coffee-900">240g</span></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 右側：階段注水狀態機計時器 (7 Cols) -->
-    <section class="lg:col-span-7 flex flex-col">
-      <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-coffee-200 flex flex-col justify-between h-full relative overflow-hidden">
-        
-        <!-- 當前狀態與階段標籤 -->
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-2">
-            <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" id="status-indicator"></span>
-            <span class="text-xs uppercase font-bold tracking-wider text-coffee-700" id="status-badge">準備就緒 (IDLE)</span>
-          </div>
-          <div class="text-xs text-coffee-700 font-medium" id="audio-status-label">🔊 音效提示已啟動</div>
-        </div>
-
-        <!-- 核心注水引導資訊 -->
-        <div class="text-center my-auto py-6">
-          <div class="text-sm font-semibold tracking-wide text-coffee-700 uppercase" id="current-stage-title">STEP 0：等待啟動</div>
-          
-          <!-- 大字當前目標水量 -->
-          <div class="my-4">
-            <span class="text-xs text-coffee-500 font-bold block mb-1">目標注水累計至</span>
-            <div class="text-5xl sm:text-6xl font-black tracking-tight text-coffee-900" id="current-target-weight">
-              0 <span class="text-2xl font-bold text-coffee-500">g</span>
+    <!-- 頂部導覽與五組一鍵手沖實驗情境列 -->
+    <header class="sticky top-0 z-30 glass-panel border-b border-roast-700 px-4 py-3 lg:px-8">
+        <div class="max-w-[1600px] mx-auto flex flex-col xl:flex-row items-start xl:items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-ambercup-400 to-ambercup-600 flex items-center justify-center shadow-lg shadow-ambercup-500/20 shrink-0">
+                    <!-- 手沖濾杯與細口壺 SVG 圖示 -->
+                    <svg class="w-6 h-6 text-roast-950" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M3 4h14l-3.5 9h-7L3 4zm14.5 1.5h2a2.5 2.5 0 010 5h-3.8l1.8-5zM6 15h8v2a3 3 0 01-3 3H9a3 3 0 01-3-3v-2zm-2 6h12v1.5H4V21z"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <h1 class="text-lg md:text-xl font-black tracking-wide text-ambercup-100">互動式手沖咖啡調整實驗室</h1>
+                        <span class="text-[11px] font-mono uppercase px-2 py-0.5 rounded bg-ambercup-500/20 text-ambercup-300 border border-ambercup-500/30">Pour-Over Science Lab</span>
+                    </div>
+                    <p class="text-xs text-ambercup-200/60">動態模擬研磨粒徑、熱力學水溫、注水翻攪壓力與粉水比對 SCA 手沖金杯萃取率及茶感酸甜平衡之影響</p>
+                </div>
             </div>
-          </div>
 
-          <!-- 計時數字 -->
-          <div class="text-3xl font-mono font-bold text-coffee-800" id="timer-display">00:00</div>
-          <div class="text-xs text-coffee-700 mt-1 font-mono" id="stage-remaining-display">階段剩餘: -- 秒</div>
-
-          <!-- 指引提示 -->
-          <p class="mt-6 text-sm text-coffee-700 max-w-sm mx-auto min-h-[40px] flex items-center justify-center font-medium px-4" id="stage-instruction">
-            確認咖啡粉已整平，點擊「開始沖煮」進入悶蒸階段。
-          </p>
+            <!-- 5 組一鍵實驗情境預設按鈕 -->
+            <div class="flex flex-wrap items-center gap-2 w-full xl:w-auto">
+                <span class="text-xs text-ambercup-200/70 mr-1 font-medium">快速實驗情境：</span>
+                <button onclick="applyPreset('floralGolden')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-ambercup-500/20 hover:bg-ambercup-500/30 text-ambercup-200 border border-ambercup-400/40 transition flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>淺焙花果金杯 (1:16 / 92°C)
+                </button>
+                <button onclick="applyPreset('classicBalance')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-roast-800 hover:bg-roast-700 text-ambercup-200/90 border border-roast-600 transition flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-ambercup-400"></span>經典三段平衡 (1:15.5 / 90°C)
+                </button>
+                <button onclick="applyPreset('clogBitter')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-roast-800 hover:bg-roast-700 text-ambercup-200/90 border border-roast-600 transition flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-rose-500"></span>過細高溫堵水過萃 (苦澀咬喉)
+                </button>
+                <button onclick="applyPreset('coarseSour')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-roast-800 hover:bg-roast-700 text-ambercup-200/90 border border-roast-600 transition flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-amber-400"></span>粗磨低溫快沖 (水感尖酸)
+                </button>
+                <button onclick="applyPreset('icedPourOver')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-roast-800 hover:bg-roast-700 text-ambercup-200/90 border border-roast-600 transition flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-sky-400"></span>日式急冷冰手沖 (高濃基底 1:13)
+                </button>
+            </div>
         </div>
+    </header>
 
-        <!-- 階段進度條 -->
-        <div class="space-y-2 mb-6">
-          <div class="flex justify-between text-xs font-semibold text-coffee-700">
-            <span>整體沖煮進度</span>
-            <span id="overall-percentage">0%</span>
-          </div>
-          <div class="w-full h-3 bg-coffee-100 rounded-full overflow-hidden">
-            <div id="progress-bar-fill" class="h-full bg-coffee-700 transition-all duration-300 w-0"></div>
-          </div>
-          <div class="grid grid-cols-3 text-[11px] text-center text-coffee-700 font-medium pt-1">
-            <span id="label-step-1" class="transition-colors">1. 悶蒸 (40s)</span>
-            <span id="label-step-2" class="transition-colors">2. 一段萃取 (40s)</span>
-            <span id="label-step-3" class="transition-colors">3. 二段平衡 (55s)</span>
-          </div>
-        </div>
+    <!-- 主內容區 -->
+    <main class="flex-1 max-w-[1600px] w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-        <!-- 操控按鈕群組 -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <button type="button" id="btn-main-action" class="col-span-1 sm:col-span-2 py-3.5 px-6 rounded-xl font-bold text-white bg-coffee-800 hover:bg-coffee-900 transition-all shadow-md active:scale-[0.98]">
-            開始沖煮
-          </button>
-          <div class="flex gap-2">
-            <button type="button" id="btn-next-stage" disabled class="flex-1 py-3.5 px-2 rounded-xl font-semibold border border-coffee-300 text-coffee-800 hover:bg-coffee-100 transition-all disabled:opacity-40 disabled:pointer-events-none text-xs">
-              下個階段 ❯
-            </button>
-            <button type="button" id="btn-reset" class="px-4 py-3.5 rounded-xl font-semibold border border-coffee-200 text-coffee-700 hover:bg-coffee-100 transition-all text-xs">
-              重置
-            </button>
-          </div>
-        </div>
+        <!-- 左側：動態調整參數面板與互動式手沖濾杯模擬器 (佔 4 欄) -->
+        <section class="lg:col-span-4 flex flex-col gap-5">
 
-      </div>
-    </section>
+            <!-- 核心參數控制面板 -->
+            <div class="glass-panel rounded-2xl p-5 flex flex-col gap-4">
+                <div class="flex items-center justify-between border-b border-roast-700 pb-3">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-ambercup-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                        </svg>
+                        <h2 class="font-bold text-base text-ambercup-100">手沖核心參數控制</h2>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span id="dripperBadge" class="text-[11px] px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30 font-medium">V60 錐形濾杯</span>
+                        <span id="roastBadge" class="text-[11px] px-2 py-0.5 rounded-full bg-ambercup-500/20 text-ambercup-300 border border-ambercup-500/30 font-medium">淺焙單品</span>
+                    </div>
+                </div>
 
-  </main>
+                <!-- 1. 研磨度控制 (Grind Size) -->
+                <div class="bg-roast-900/90 rounded-xl p-4 border border-roast-800">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <label for="grindSlider" class="text-sm font-bold text-ambercup-100 flex items-center gap-1.5">
+                                研磨度 (Grind Size)
+                            </label>
+                            <p class="text-[11px] text-ambercup-200/60">決定粉床滲透率、萃取表面積與底部濾紙細粉阻塞率</p>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <div class="text-lg font-mono font-bold text-ambercup-400">
+                                #<span id="grindValText">5.5</span>
+                            </div>
+                            <div class="text-[11px] font-mono text-ambercup-200/80">
+                                約 <span id="micronValText">750</span> µm (<span id="grindDescText">二號砂糖中細</span>)
+                            </div>
+                        </div>
+                    </div>
 
-  <footer class="py-6 border-t border-coffee-200 text-center text-xs text-coffee-700">
-    Drip Dial 沖煮實驗室 &copy; 2026. Built with Vanilla JS & Web Audio.
-  </footer>
+                    <div class="flex items-center gap-3 mt-1">
+                        <div class="flex-1">
+                            <input id="grindSlider" type="range" min="1.0" max="10.0" step="0.1" value="5.5" class="w-full">
+                            <div class="flex justify-between text-[10px] text-ambercup-200/50 font-mono mt-1">
+                                <span>1.0 極細(400µm)</span>
+                                <span>5.5 二號砂(750µm)</span>
+                                <span>10.0 粗磨(1100µm)</span>
+                            </div>
+                            <div class="mt-1.5 flex items-center justify-between text-[11px] text-ambercup-200/70 bg-roast-950/70 px-2.5 py-1 rounded border border-roast-800">
+                                <span>微細粉比例 (&lt;100µm Fines)：</span>
+                                <span id="finesPctText" class="font-mono font-bold text-ambercup-300">11.5%</span>
+                            </div>
+                        </div>
+                        <!-- 研磨顆粒分佈迷你預覽畫布 -->
+                        <div class="w-16 h-16 rounded-lg bg-roast-950 border border-roast-700 flex flex-col items-center justify-center shrink-0 overflow-hidden relative" title="手沖咖啡粉粒徑與細粉分佈模擬">
+                            <canvas id="grindPreviewCanvas" class="w-full h-full"></canvas>
+                            <span class="absolute bottom-0.5 text-[9px] font-mono text-ambercup-200/70 bg-roast-950/85 px-1 rounded">粒徑分佈</span>
+                        </div>
+                    </div>
+                </div>
 
-  <!-- JavaScript 邏輯 -->
-  <script>
-    // --- 1. 參數資料與對照矩陣 ---
-    const RECIPES = {
-      light: {
-        acidity: { ratio: 16.5, temp: 93, grind: '中細（精鹽粗細）', splits: [0.15, 0.45, 0.40] },
-        sweet:   { ratio: 16.0, temp: 92, grind: '中度（白砂糖粗細）', splits: [0.15, 0.45, 0.40] },
-        body:    { ratio: 15.5, temp: 91, grind: '中度（白砂糖粗細）', splits: [0.18, 0.42, 0.40] }
-      },
-      medium: {
-        acidity: { ratio: 16.0, temp: 91, grind: '中度（白砂糖粗細）', splits: [0.15, 0.45, 0.40] },
-        sweet:   { ratio: 15.5, temp: 90, grind: '中度（白砂糖粗細）', splits: [0.15, 0.45, 0.40] },
-        body:    { ratio: 15.0, temp: 89, grind: '中粗（二砂粗細）',   splits: [0.20, 0.40, 0.40] }
-      },
-      dark: {
-        acidity: { ratio: 15.0, temp: 88, grind: '中粗（二砂粗細）',   splits: [0.15, 0.45, 0.40] },
-        sweet:   { ratio: 14.5, temp: 88, grind: '中粗（二砂粗細）',   splits: [0.15, 0.45, 0.40] },
-        body:    { ratio: 14.0, temp: 86, grind: '中粗（粗砂粗細）',   splits: [0.20, 0.40, 0.40] }
-      }
-    };
+                <!-- 2. 沖煮水溫控制 (Water Temperature) -->
+                <div class="bg-roast-900/90 rounded-xl p-4 border border-roast-800">
+                    <div class="flex justify-between items-center mb-1">
+                        <div>
+                            <label for="tempSlider" class="text-sm font-bold text-ambercup-100">沖煮水溫 (Water Temperature)</label>
+                            <p class="text-[11px] text-ambercup-200/60">高溫激發淺焙花果酸香，低溫抑制深焙後段焦苦雜澀</p>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <span id="tempValText" class="text-lg font-mono font-bold text-amber-400">92.0</span>
+                            <span class="text-xs font-mono text-ambercup-200/70">°C</span>
+                        </div>
+                    </div>
+                    <input id="tempSlider" type="range" min="84.0" max="96.0" step="0.5" value="92.0" class="w-full mt-2">
+                    <div class="flex justify-between text-[10px] text-ambercup-200/50 font-mono mt-1">
+                        <span>84°C 深焙醇厚低苦</span>
+                        <span>89°C~92°C 黃金區間</span>
+                        <span>96°C 極淺焙強萃</span>
+                    </div>
+                </div>
 
-    // --- 2. 狀態管理 ---
-    const state = {
-      roast: 'medium',
-      flavor: 'sweet',
-      dose: 15,
-      calculated: null,
-      
-      // 狀態機: IDLE, RUNNING, PAUSED, FINISHED
-      timerState: 'IDLE',
-      currentStageIndex: 0, // 0: 悶蒸, 1: 一段, 2: 二段
-      elapsedSeconds: 0,
-      stageElapsedSeconds: 0,
-      timerInterval: null
-    };
+                <!-- 3. 注水衝擊壓力 / 翻攪力道 (Pouring Agitation / Water Column Pressure) -->
+                <div class="bg-roast-900/90 rounded-xl p-4 border border-roast-800">
+                    <div class="flex justify-between items-start mb-1">
+                        <div>
+                            <label for="pressureSlider" class="text-sm font-bold text-ambercup-100">注水衝擊壓力 / 翻攪力道 (Agitation)</label>
+                            <p class="text-[11px] text-ambercup-200/60">手沖壺水柱高度、注水流速與繞圈擾流強度的綜合動能</p>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <div class="text-lg font-mono font-bold text-sky-400">
+                                Lv.<span id="pressureValText">5.0</span>
+                            </div>
+                            <div class="text-[10px] font-mono text-ambercup-200/70" id="pressureEquivText">
+                                ~0.85 kPa (穩定同心圓)
+                            </div>
+                        </div>
+                    </div>
+                    <input id="pressureSlider" type="range" min="1.0" max="10.0" step="0.2" value="5.0" class="w-full mt-2">
+                    <div class="flex justify-between text-[10px] text-ambercup-200/50 font-mono mt-1">
+                        <span>1.0 點滴柔水中心注</span>
+                        <span>5.0 標準穩定繞圈</span>
+                        <span>10.0 高水柱強翻攪</span>
+                    </div>
+                </div>
 
-    // 各階段時間規劃（秒）
-    const STAGE_CONFIGS = [
-      { id: 'bloom', name: 'STEP 1：悶蒸 (Blooming)', duration: 40, tip: '輕柔由中心向外繞圈潤濕所有咖啡粉，靜置排氣釋放二氧化碳。' },
-      { id: 'pour1', name: 'STEP 2：一段萃取 (Flavor)', duration: 40, tip: '維持平穩水流，由內向外均勻繞圈注水，帶出咖啡酸甜層次。' },
-      { id: 'pour2', name: 'STEP 3：二段平衡 (Body & Finish)', duration: 55, tip: '補足目標水量，保持液面高度，等待水流完整滴濾下落。' }
-    ];
-    const TOTAL_BREW_TIME = STAGE_CONFIGS.reduce((acc, cur) => acc + cur.duration, 0); // 135s
+                <!-- 4. 粉水比例、烘焙度與濾杯幾何設定 -->
+                <div class="bg-roast-900/90 rounded-xl p-4 border border-roast-800 flex flex-col gap-3.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-ambercup-200 uppercase tracking-wider">粉水比例與烘焙濾杯設定</span>
+                        <span id="brewRatioBadge" class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-ambercup-400/20 text-ambercup-300 border border-ambercup-400/30">粉水比 1 : 16.0</span>
+                    </div>
 
-    // --- 3. Web Audio API 音效生成器 ---
-    let audioCtx = null;
-    function initAudio() {
-      if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
-    }
+                    <!-- 乾粉重與目標粉水比滑桿 -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-ambercup-200/80">乾粉重 (Dose)</span>
+                                <span class="font-mono font-bold text-ambercup-300"><span id="doseValText">15.0</span> g</span>
+                            </div>
+                            <input id="doseSlider" type="range" min="10.0" max="30.0" step="0.5" value="15.0" class="w-full">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-ambercup-200/80">目標粉水比 (Ratio)</span>
+                                <span class="font-mono font-bold text-ambercup-300">1 : <span id="ratioValText">16.0</span></span>
+                            </div>
+                            <input id="ratioSlider" type="range" min="12.0" max="19.0" step="0.5" value="16.0" class="w-full">
+                        </div>
+                    </div>
 
-    function playTone(freq, type = 'sine', duration = 0.15) {
-      try {
-        initAudio();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = type;
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                    <!-- 自動換算總注水量與實得咖啡液重 -->
+                    <div class="grid grid-cols-3 gap-2 bg-roast-950/90 p-2.5 rounded-lg border border-roast-800 text-center">
+                        <div>
+                            <span class="text-[10px] text-ambercup-200/60 block">總注水量 (Water)</span>
+                            <span class="font-mono text-sm font-bold text-sky-400"><span id="totalWaterText">240</span> ml</span>
+                        </div>
+                        <div class="border-x border-roast-800">
+                            <span class="text-[10px] text-ambercup-200/60 block">粉層吸水滯留</span>
+                            <span class="font-mono text-sm font-bold text-ambercup-200/70">-<span id="retainedWaterText">30</span> ml</span>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-ambercup-200/60 block">預計實得液重</span>
+                            <span class="font-mono text-sm font-bold text-emerald-400"><span id="actualYieldText">210</span> ml</span>
+                        </div>
+                    </div>
 
-        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                    <!-- 烘焙度切換 -->
+                    <div>
+                        <label class="text-xs text-ambercup-200/70 block mb-1.5">咖啡豆烘焙度 (Roast Level)</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button onclick="setRoast('light')" id="roastBtn-light" class="py-2 px-2 rounded-lg text-xs font-bold border border-ambercup-400 bg-ambercup-500/20 text-ambercup-100 transition flex flex-col items-center">
+                                <span class="w-3 h-3 rounded-full bg-[#c68853] mb-1"></span>
+                                淺焙 (花果茶感)
+                            </button>
+                            <button onclick="setRoast('medium')" id="roastBtn-medium" class="py-2 px-2 rounded-lg text-xs font-medium border border-roast-700 bg-roast-800 text-ambercup-200/80 transition flex flex-col items-center">
+                                <span class="w-3 h-3 rounded-full bg-[#804c27] mb-1"></span>
+                                中焙 (堅果柑橘)
+                            </button>
+                            <button onclick="setRoast('dark')" id="roastBtn-dark" class="py-2 px-2 rounded-lg text-xs font-medium border border-roast-700 bg-roast-800 text-ambercup-200/80 transition flex flex-col items-center">
+                                <span class="w-3 h-3 rounded-full bg-[#422411] mb-1"></span>
+                                深焙 (黑巧醇厚)
+                            </button>
+                        </div>
+                    </div>
 
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + duration);
-      } catch (e) {
-        console.warn('Audio play prevented:', e);
-      }
-    }
+                    <!-- 濾杯型態切換 -->
+                    <div>
+                        <label class="text-xs text-ambercup-200/70 block mb-1.5">濾杯幾何結構 (Dripper Geometry)</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="setDripper('v60')" id="dripperBtn-v60" class="py-2 px-2.5 rounded-lg text-xs font-bold border border-ambercup-400 bg-ambercup-500/20 text-ambercup-100 transition flex items-center justify-center gap-1.5">
+                                <span>▽ V60 錐形濾杯 (流速快/層次明快)</span>
+                            </button>
+                            <button onclick="setDripper('kalita')" id="dripperBtn-kalita" class="py-2 px-2.5 rounded-lg text-xs font-medium border border-roast-700 bg-roast-800 text-ambercup-200/80 transition flex items-center justify-center gap-1.5">
+                                <span>⏢ 平底蛋糕濾杯 (半浸泡/甜感圓潤)</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-    // 階段轉換提示雙音
-    function playStageChangeTone() {
-      playTone(587.33, 'triangle', 0.12); // D5
-      setTimeout(() => playTone(880, 'triangle', 0.25), 130); // A5
-    }
+            <!-- 互動式手沖濾杯實作動畫模擬器 -->
+            <div class="glass-panel rounded-2xl p-5 flex flex-col gap-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="font-bold text-base text-ambercup-100 flex items-center gap-2">
+                            <span>手沖濾杯實作動態模擬</span>
+                            <span id="brewStateBadge" class="text-[11px] font-mono px-2 py-0.5 rounded bg-roast-800 text-ambercup-300 border border-roast-700">待機預覽中</span>
+                        </h3>
+                        <p class="text-xs text-ambercup-200/60">觀察細口壺注水、悶蒸排氣膨脹、濾杯水位與下壺茶湯色澤</p>
+                    </div>
+                    <button id="startBrewBtn" onclick="toggleBrewSimulation()" class="px-4 py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-ambercup-500 to-ambercup-400 hover:from-ambercup-400 hover:to-ambercup-300 text-roast-950 shadow-lg shadow-ambercup-500/25 transition flex items-center gap-2 shrink-0 active:scale-95">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                        <span id="startBrewBtnText">開始實作手沖計時</span>
+                    </button>
+                </div>
 
-    // 完成祝賀和弦
-    function playFinishFanfare() {
-      const notes = [523.25, 659.25, 783.99, 1046.50]; // C Major
-      notes.forEach((freq, idx) => {
-        setTimeout(() => playTone(freq, 'sine', 0.35), idx * 120);
-      });
-    }
+                <!-- 濾杯動畫 Canvas 與即時手沖電子秤讀數 -->
+                <div class="grid grid-cols-12 gap-3 items-center bg-roast-950 rounded-xl p-3 border border-roast-800">
+                    <div class="col-span-7 h-56 relative rounded-lg overflow-hidden bg-gradient-to-b from-roast-900 to-roast-950 border border-roast-800/80">
+                        <canvas id="dripperSimCanvas" class="w-full h-full block"></canvas>
+                        <div id="simStageOverlay" class="absolute top-2 left-2 text-[11px] font-mono px-2 py-0.5 rounded bg-roast-950/85 text-ambercup-300 border border-roast-700">
+                            完萃預覽狀態
+                        </div>
+                    </div>
+                    <div class="col-span-5 flex flex-col gap-2">
+                        <div class="bg-roast-900 p-2.5 rounded-lg border border-roast-800">
+                            <span class="text-[10px] text-ambercup-200/60 block">手沖計時器 (Brew Timer)</span>
+                            <div class="font-mono text-xl font-bold text-ambercup-100">
+                                <span id="liveTimerText">02:14</span>
+                            </div>
+                        </div>
+                        <div class="bg-roast-900 p-2.5 rounded-lg border border-roast-800">
+                            <span class="text-[10px] text-ambercup-200/60 block">累計總注水量 (Poured)</span>
+                            <div class="font-mono text-base font-bold text-sky-400">
+                                <span id="livePouredText">240.0</span><span class="text-xs font-normal text-ambercup-200/60 ml-1">g</span>
+                            </div>
+                        </div>
+                        <div class="bg-roast-900 p-2.5 rounded-lg border border-roast-800">
+                            <span class="text-[10px] text-ambercup-200/60 block">下壺實得咖啡液 (Server)</span>
+                            <div class="font-mono text-base font-bold text-ambercup-400">
+                                <span id="liveYieldText">210.0</span><span class="text-xs font-normal text-ambercup-200/60 ml-1">g</span>
+                            </div>
+                        </div>
+                        <div class="bg-roast-900 p-2.5 rounded-lg border border-roast-800">
+                            <span class="text-[10px] text-ambercup-200/60 block">細粉堵水風險 (Clogging)</span>
+                            <div class="flex items-center gap-2 mt-0.5">
+                                <div class="flex-1 h-2 bg-roast-950 rounded-full overflow-hidden">
+                                    <div id="clogRiskBar" class="h-full bg-emerald-400 transition-all duration-300" style="width: 15%"></div>
+                                </div>
+                                <span id="clogRiskText" class="font-mono text-xs font-bold text-emerald-400">15%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-    // 倒數提示單音
-    function playCountdownBeep() {
-      playTone(440, 'sine', 0.08); // A4
-    }
+        </section>
 
-    // --- 4. DOM 節點快取 ---
-    const roastBtns = document.querySelectorAll('.roast-btn');
-    const flavorBtns = document.querySelectorAll('.flavor-btn');
-    const doseInput = document.getElementById('dose-input');
-    const btnDoseDec = document.getElementById('btn-dose-dec');
-    const btnDoseInc = document.getElementById('btn-dose-inc');
+        <!-- 右側：三大科學視覺化圖表與手沖咖啡師智慧診斷 (佔 8 欄) -->
+        <section class="lg:col-span-8 flex flex-col gap-6">
 
-    const paramRatioBadge = document.getElementById('param-ratio-badge');
-    const calcTotalWater = document.getElementById('calc-total-water');
-    const calcTemp = document.getElementById('calc-temp');
-    const calcGrind = document.getElementById('calc-grind');
-    const planStage1 = document.getElementById('plan-stage-1');
-    const planStage2 = document.getElementById('plan-stage-2');
-    const planStage3 = document.getElementById('plan-stage-3');
+            <!-- 頂部即時關鍵數據儀表板 (KPI Cards) -->
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                <div class="glass-panel rounded-xl p-3.5 border-l-4 border-l-ambercup-400">
+                    <span class="text-xs text-ambercup-200/60 block">預估總滴濾時間</span>
+                    <div class="flex items-baseline gap-1 mt-1">
+                        <span id="kpiTime" class="text-2xl font-mono font-bold text-ambercup-100">2:14</span>
+                        <span id="kpiTimeSec" class="text-xs font-mono text-ambercup-200/70">(134s)</span>
+                    </div>
+                    <span id="kpiTimeStatus" class="text-[11px] text-emerald-400 font-medium">✓ 理想時間窗 (2:00-2:35)</span>
+                </div>
 
-    const statusBadge = document.getElementById('status-badge');
-    const statusIndicator = document.getElementById('status-indicator');
-    const currentStageTitle = document.getElementById('current-stage-title');
-    const currentTargetWeight = document.getElementById('current-target-weight');
-    const timerDisplay = document.getElementById('timer-display');
-    const stageRemainingDisplay = document.getElementById('stage-remaining-display');
-    const stageInstruction = document.getElementById('stage-instruction');
-    const progressBarFill = document.getElementById('progress-bar-fill');
-    const overallPercentage = document.getElementById('overall-percentage');
+                <div class="glass-panel rounded-xl p-3.5 border-l-4 border-l-emerald-400">
+                    <span class="text-xs text-ambercup-200/60 block">萃取率 (Extraction Yield)</span>
+                    <div class="flex items-baseline gap-1 mt-1">
+                        <span id="kpiEY" class="text-2xl font-mono font-bold text-emerald-400">20.15</span>
+                        <span class="text-xs font-mono text-ambercup-200/70">%</span>
+                    </div>
+                    <span class="text-[11px] text-ambercup-200/70">SCA 金杯 18% - 22%</span>
+                </div>
 
-    const btnMainAction = document.getElementById('btn-main-action');
-    const btnNextStage = document.getElementById('btn-next-stage');
-    const btnReset = document.getElementById('btn-reset');
+                <div class="glass-panel rounded-xl p-3.5 border-l-4 border-l-amber-400">
+                    <span class="text-xs text-ambercup-200/60 block">咖啡濃度 (Strength / TDS)</span>
+                    <div class="flex items-baseline gap-1 mt-1">
+                        <span id="kpiTDS" class="text-2xl font-mono font-bold text-amber-400">1.38</span>
+                        <span class="text-xs font-mono text-ambercup-200/70">%</span>
+                    </div>
+                    <span class="text-[11px] text-ambercup-200/70">手沖標準 1.15% - 1.45%</span>
+                </div>
 
-    // --- 5. 邏輯換算函式 ---
-    function recalculateParams() {
-      const currentRecipe = RECIPES[state.roast][state.flavor];
-      const totalWater = Math.round(state.dose * currentRecipe.ratio);
-      
-      const s1 = Math.round(totalWater * currentRecipe.splits[0]);
-      const s2 = Math.round(totalWater * (currentRecipe.splits[0] + currentRecipe.splits[1]));
-      const s3 = totalWater;
+                <div class="glass-panel rounded-xl p-3.5 border-l-4 border-l-sky-400">
+                    <span class="text-xs text-ambercup-200/60 block">平均滴濾流速</span>
+                    <div class="flex items-baseline gap-1 mt-1">
+                        <span id="kpiFlow" class="text-2xl font-mono font-bold text-sky-400">1.57</span>
+                        <span class="text-xs font-mono text-ambercup-200/70">g/s</span>
+                    </div>
+                    <span id="kpiPeakFlow" class="text-[11px] text-ambercup-200/70">峰值滴濾 2.45 g/s</span>
+                </div>
 
-      state.calculated = {
-        ratio: currentRecipe.ratio,
-        temp: currentRecipe.temp,
-        grind: currentRecipe.grind,
-        totalWater,
-        stageTargets: [s1, s2, s3]
-      };
+                <div class="glass-panel rounded-xl p-3.5 border-l-4 border-l-rose-400 col-span-2 sm:col-span-1">
+                    <span class="text-xs text-ambercup-200/60 block">手沖感官綜合評級</span>
+                    <div class="flex items-baseline gap-1 mt-1">
+                        <span id="kpiScore" class="text-2xl font-mono font-bold text-ambercup-100">95</span>
+                        <span class="text-xs font-mono text-ambercup-200/70">/ 100</span>
+                    </div>
+                    <span id="kpiFlavorTag" class="text-[11px] text-emerald-400 font-medium">花果明亮・茶感清甜</span>
+                </div>
+            </div>
 
-      // 渲染換算結果
-      paramRatioBadge.textContent = `1:${currentRecipe.ratio}`;
-      calcTotalWater.innerHTML = `${totalWater}<span class="text-sm font-normal">g</span>`;
-      calcTemp.innerHTML = `${currentRecipe.temp}<span class="text-sm font-normal">°C</span>`;
-      calcGrind.textContent = currentRecipe.grind;
-      planStage1.textContent = `${s1}g`;
-      planStage2.textContent = `${s2}g`;
-      planStage3.textContent = `${s3}g`;
+            <!-- 圖表一與圖表二並排 -->
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
-      // 若目前為 IDLE 狀態，同步更新計時器預覽目標
-      if (state.timerState === 'IDLE') {
-        currentTargetWeight.innerHTML = `0 <span class="text-2xl font-bold text-coffee-500">g</span>`;
-      }
-    }
+                <!-- 圖表一：SCA 手沖金杯萃取控制圖 (Brew Control Chart) -->
+                <div class="glass-panel rounded-2xl p-5 flex flex-col">
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-ambercup-400"></span>
+                                <h3 class="font-bold text-base text-ambercup-100">圖表一：SCA 手沖金杯萃取控制圖</h3>
+                            </div>
+                            <p class="text-xs text-ambercup-200/60 mt-0.5">橫軸：萃取率 (EY 14%~25%) ｜ 縱軸：濃度 (TDS 0.80%~1.85%)</p>
+                        </div>
+                        <span id="matrixZoneBadge" class="text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                            理想金杯區
+                        </span>
+                    </div>
+                    <div class="relative w-full h-72 bg-roast-950 rounded-xl border border-roast-800 overflow-hidden cursor-crosshair" title="點擊圖表任意位置可自動反推建議的粉水比與研磨度！">
+                        <canvas id="scaChartCanvas" class="w-full h-full block"></canvas>
+                    </div>
+                    <div class="flex flex-wrap items-center justify-between text-[11px] text-ambercup-200/60 mt-2.5 gap-2">
+                        <div class="flex items-center gap-3">
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-500/30 border border-emerald-400 inline-block"></span> 金杯區 (EY 18-22%, TDS 1.15-1.45%)</span>
+                        </div>
+                        <span class="font-mono text-ambercup-300">💡 點擊圖表任意位置可反推研磨度與粉水比</span>
+                    </div>
+                </div>
 
-    // --- 6. UI 切換渲染 ---
-    function updateButtonGroupUI() {
-      roastBtns.forEach(btn => {
-        const active = btn.dataset.val === state.roast;
-        btn.className = `roast-btn py-2 text-sm font-medium rounded-xl border transition-all text-center ${
-          active ? 'bg-coffee-800 text-white border-coffee-800 shadow-sm' : 'border-coffee-200 text-coffee-800 hover:bg-coffee-100'
-        }`;
-      });
+                <!-- 圖表二：三段式注水時間軸、滴濾流速與累積水量曲線圖 -->
+                <div class="glass-panel rounded-2xl p-5 flex flex-col">
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-sky-400"></span>
+                                <h3 class="font-bold text-base text-ambercup-100">圖表二：三段式注水、滴濾流速與液重曲線</h3>
+                            </div>
+                            <p class="text-xs text-ambercup-200/60 mt-0.5">悶蒸 (0-30s) ➔ 第一段繞圈 (30-75s) ➔ 第二段柔水 (75-115s) ➔ 滴乾</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2.5 text-[11px] font-mono">
+                            <span class="flex items-center gap-1 text-ambercup-200/70"><span class="w-3 border-b border-dashed border-ambercup-200 inline-block"></span>累積注水(g)</span>
+                            <span class="flex items-center gap-1 text-ambercup-400"><span class="w-3 h-0.5 bg-ambercup-400 inline-block"></span>下壺液重(g)</span>
+                            <span class="flex items-center gap-1 text-sky-400"><span class="w-3 h-0.5 bg-sky-400 inline-block"></span>滴濾流速(g/s)</span>
+                        </div>
+                    </div>
+                    <div class="relative w-full h-72 bg-roast-950 rounded-xl border border-roast-800 overflow-hidden">
+                        <canvas id="flowChartCanvas" class="w-full h-full block"></canvas>
+                    </div>
+                    <div class="flex flex-wrap items-center justify-between text-[11px] text-ambercup-200/60 mt-2.5 gap-2">
+                        <span>綠色區間：手沖黃金完萃時間窗 (120s ~ 155s)</span>
+                        <span id="pourScheduleInfo" class="text-ambercup-300 font-mono">配水：悶蒸 30g / 一段 +115g / 二段 +95g</span>
+                    </div>
+                </div>
 
-      flavorBtns.forEach(btn => {
-        const active = btn.dataset.val === state.flavor;
-        btn.className = `flavor-btn py-2 text-xs font-medium rounded-xl border transition-all text-center ${
-          active ? 'bg-coffee-800 text-white border-coffee-800 shadow-sm' : 'border-coffee-200 text-coffee-800 hover:bg-coffee-100'
-        }`;
-      });
-    }
+            </div>
 
-    // 格式化秒數為 mm:ss
-    function formatTime(seconds) {
-      const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-      const s = (seconds % 60).toString().padStart(2, '0');
-      return `${m}:${s}`;
-    }
+            <!-- 圖表三：酸甜苦茶感平衡光譜與六維度風味雷達圖 -->
+            <div class="glass-panel rounded-2xl p-5">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                            <h3 class="font-bold text-base text-ambercup-100">圖表三：酸甜苦茶感平衡光譜與六維度風味雷達圖</h3>
+                        </div>
+                        <p class="text-xs text-ambercup-200/60 mt-0.5">前段釋放花香與柑橘莓果酸 ➔ 中段焦糖甜感與醇厚度 ➔ 尾段木質苦韻與細粉澀感</p>
+                    </div>
 
-    // --- 7. 計時器與狀態機核心 ---
-    function renderTimerUI() {
-      timerDisplay.textContent = formatTime(state.elapsedSeconds);
+                    <!-- 酸甜苦動態平衡天平指標條 -->
+                    <div class="flex items-center gap-2 bg-roast-900 px-3 py-1.5 rounded-xl border border-roast-800">
+                        <span class="text-xs text-amber-400 font-bold">尖酸水感</span>
+                        <div class="w-36 sm:w-44 h-2.5 rounded-full bg-gradient-to-r from-amber-400 via-emerald-400 to-purple-500 relative">
+                            <div id="balancePointer" class="w-3.5 h-3.5 rounded-full bg-white border-2 border-roast-950 shadow-md absolute -top-0.5 transition-all duration-300" style="left: calc(50% - 7px);"></div>
+                        </div>
+                        <span class="text-xs text-purple-400 font-bold">濃苦咬喉</span>
+                    </div>
+                </div>
 
-      // 整體進度
-      const percent = Math.min(100, Math.round((state.elapsedSeconds / TOTAL_BREW_TIME) * 100));
-      progressBarFill.style.width = `${percent}%`;
-      overallPercentage.textContent = `${percent}%`;
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                    <!-- 六維度感官雷達圖 Canvas -->
+                    <div class="md:col-span-5 h-64 bg-roast-950 rounded-xl border border-roast-800 relative overflow-hidden">
+                        <canvas id="flavorRadarCanvas" class="w-full h-full block"></canvas>
+                    </div>
 
-      // 標註高亮當前階段標籤
-      for (let i = 0; i < 3; i++) {
-        const label = document.getElementById(`label-step-${i + 1}`);
-        if (state.timerState === 'FINISHED') {
-          label.className = 'font-bold text-emerald-600';
-        } else if (state.timerState === 'IDLE') {
-          label.className = 'text-coffee-700';
-        } else if (i === state.currentStageIndex) {
-          label.className = 'font-bold text-coffee-900 underline';
-        } else if (i < state.currentStageIndex) {
-          label.className = 'text-coffee-400 line-through';
-        } else {
-          label.className = 'text-coffee-700';
+                    <!-- 六維度感官指標能量條 -->
+                    <div class="md:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-3.5">
+                        <!-- 1. 果酸明亮感 -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="font-bold text-amber-300">果酸明亮感 (Acidity)</span>
+                                <span id="acidityValText" class="font-mono font-bold text-amber-300">78%</span>
+                            </div>
+                            <div class="w-full h-2 bg-roast-950 rounded-full overflow-hidden border border-roast-800">
+                                <div id="acidityBar" class="h-full bg-gradient-to-r from-yellow-500 to-amber-400 rounded-full transition-all duration-300" style="width: 78%"></div>
+                            </div>
+                            <span id="acidityQualText" class="text-[11px] text-ambercup-200/60 mt-0.5 block">柑橘與白桃般活潑酸質</span>
+                        </div>
+
+                        <!-- 2. 花果揚香氣 -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="font-bold text-pink-300">花果香氣 (Aroma & Floral)</span>
+                                <span id="aromaValText" class="font-mono font-bold text-pink-300">88%</span>
+                            </div>
+                            <div class="w-full h-2 bg-roast-950 rounded-full overflow-hidden border border-roast-800">
+                                <div id="aromaBar" class="h-full bg-gradient-to-r from-pink-500 to-rose-400 rounded-full transition-all duration-300" style="width: 88%"></div>
+                            </div>
+                            <span id="aromaQualText" class="text-[11px] text-ambercup-200/60 mt-0.5 block">茉莉花香與佛手柑香氣奔放</span>
+                        </div>
+
+                        <!-- 3. 焦糖甜感 -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="font-bold text-emerald-300">焦糖甜感 (Sweetness)</span>
+                                <span id="sweetnessValText" class="font-mono font-bold text-emerald-300">86%</span>
+                            </div>
+                            <div class="w-full h-2 bg-roast-950 rounded-full overflow-hidden border border-roast-800">
+                                <div id="sweetnessBar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-300" style="width: 86%"></div>
+                            </div>
+                            <span id="sweetnessQualText" class="text-[11px] text-ambercup-200/60 mt-0.5 block">蜂蜜與蔗糖般清甜回甘</span>
+                        </div>
+
+                        <!-- 4. 茶感乾淨度 -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="font-bold text-sky-300">茶感乾淨度 (Clarity & Tea-like)</span>
+                                <span id="clarityValText" class="font-mono font-bold text-sky-300">90%</span>
+                            </div>
+                            <div class="w-full h-2 bg-roast-950 rounded-full overflow-hidden border border-roast-800">
+                                <div id="clarityBar" class="h-full bg-gradient-to-r from-sky-500 to-cyan-400 rounded-full transition-all duration-300" style="width: 90%"></div>
+                            </div>
+                            <span id="clarityQualText" class="text-[11px] text-ambercup-200/60 mt-0.5 block">清澈透亮如高山烏龍茶感</span>
+                        </div>
+
+                        <!-- 5. 醇厚 Body -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="font-bold text-ambercup-300">醇厚飽滿度 (Body)</span>
+                                <span id="bodyValText" class="font-mono font-bold text-ambercup-300">68%</span>
+                            </div>
+                            <div class="w-full h-2 bg-roast-950 rounded-full overflow-hidden border border-roast-800">
+                                <div id="bodyBar" class="h-full bg-gradient-to-r from-ambercup-600 to-ambercup-400 rounded-full transition-all duration-300" style="width: 68%"></div>
+                            </div>
+                            <span id="bodyQualText" class="text-[11px] text-ambercup-200/60 mt-0.5 block">絲滑輕盈、層次分明</span>
+                        </div>
+
+                        <!-- 6. 苦澀尾韻 -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="font-bold text-purple-300">苦澀尾韻 (Bitterness & Dryness)</span>
+                                <span id="bitternessValText" class="font-mono font-bold text-purple-300">24%</span>
+                            </div>
+                            <div class="w-full h-2 bg-roast-950 rounded-full overflow-hidden border border-roast-800">
+                                <div id="bitternessBar" class="h-full bg-gradient-to-r from-purple-600 to-rose-500 rounded-full transition-all duration-300" style="width: 24%"></div>
+                            </div>
+                            <span id="bitternessQualText" class="text-[11px] text-ambercup-200/60 mt-0.5 block">極低苦澀、尾韻乾淨清爽</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 智慧手沖咖啡師診斷與調整處方面板 -->
+            <div class="glass-panel rounded-2xl p-5 border border-ambercup-400/30 amber-glow">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 pb-3 border-b border-roast-700">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-ambercup-500/20 border border-ambercup-400/40 flex items-center justify-center text-ambercup-300">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-base text-ambercup-100">手沖冠軍咖啡師智慧感官診斷與修正處方 (Pour-Over AI Diagnostic)</h3>
+                            <p class="text-xs text-ambercup-200/60">依據重力滲透達西定律、水柱翻攪雷諾數與三段式萃取動力學即時剖析</p>
+                        </div>
+                    </div>
+                    <div id="diagnosticStatusPill" class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 self-start md:self-auto">
+                        ✓ 手沖金杯平衡狀態
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-4">
+                    <!-- 物理與感官綜合診斷 -->
+                    <div class="lg:col-span-7 bg-roast-900/90 rounded-xl p-4 border border-roast-800 flex flex-col justify-between">
+                        <div>
+                            <span class="text-xs font-bold text-ambercup-400 uppercase tracking-wider block mb-1.5">當前手沖萃取物理剖析</span>
+                            <p id="diagnosticMainText" class="text-sm text-ambercup-100 leading-relaxed">
+                                載入診斷中...
+                            </p>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-roast-800 flex flex-wrap gap-2" id="flavorNotesContainer">
+                            <!-- 動態產生風味標籤 -->
+                        </div>
+                    </div>
+
+                    <!-- 具體調磨與手沖手法修正建議 -->
+                    <div class="lg:col-span-5 bg-roast-900/90 rounded-xl p-4 border border-roast-800">
+                        <span class="text-xs font-bold text-amber-400 uppercase tracking-wider block mb-2">下一杯調整處方建議 (Dial-in Action)</span>
+                        <ul id="diagnosticActionList" class="text-xs text-ambercup-200/90 space-y-2">
+                            <!-- 動態產生建議列表 -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- 頁尾資訊 -->
+    <footer class="border-t border-roast-800 py-4 px-6 text-center text-xs text-ambercup-200/40 font-mono">
+        互動式手沖咖啡調整實驗室 (Pour-Over Coffee Dial-in Laboratory) • 採用 SCA 金杯控制圖標準與三段式重力滲透模型建構
+    </footer>
+
+    <!-- 手沖物理模型、視覺化渲染與互動邏輯腳本 -->
+    <script>
+        // ==========================================
+        // 1. 實驗室全域狀態與預設參數
+        // ==========================================
+        const state = {
+            grind: 5.5,          // 研磨度 1.0 (400µm 極細) ~ 10.0 (1100µm 粗磨)，預設 5.5 (~750µm)
+            temp: 92.0,          // 水溫 84.0°C ~ 96.0°C
+            pressure: 5.0,       // 注水衝擊壓力/翻攪力道 1.0 ~ 10.0
+            dose: 15.0,          // 乾粉重 10.0g ~ 30.0g
+            ratio: 16.0,         // 粉水比 1:12.0 ~ 1:19.0
+            roast: 'light',      // 'light' | 'medium' | 'dark'
+            dripper: 'v60',      // 'v60' | 'kalita'
+
+            // 模擬動畫狀態
+            isBrewing: false,
+            simCurrentTime: 0,
+            simAnimId: null
+        };
+
+        let simResult = {};
+
+        // DOM 快取
+        const grindSlider = document.getElementById('grindSlider');
+        const tempSlider = document.getElementById('tempSlider');
+        const pressureSlider = document.getElementById('pressureSlider');
+        const doseSlider = document.getElementById('doseSlider');
+        const ratioSlider = document.getElementById('ratioSlider');
+
+        // 秒數轉 mm:ss 格式
+        function formatTimeMMSS(seconds) {
+            const s = Math.round(seconds);
+            const mins = Math.floor(s / 60);
+            const secs = s % 60;
+            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
         }
-      }
 
-      if (state.timerState === 'IDLE') {
-        statusIndicator.className = 'w-3 h-3 rounded-full bg-coffee-300';
-        statusBadge.textContent = '準備就緒 (IDLE)';
-        currentStageTitle.textContent = 'STEP 0：等待啟動';
-        stageInstruction.textContent = '確認濾紙已貼合且咖啡粉已整平，點擊「開始沖煮」。';
-        stageRemainingDisplay.textContent = '階段剩餘: -- 秒';
-        btnMainAction.textContent = '開始沖煮';
-        btnMainAction.className = 'col-span-1 sm:col-span-2 py-3.5 px-6 rounded-xl font-bold text-white bg-coffee-800 hover:bg-coffee-900 transition-all shadow-md';
-        btnNextStage.disabled = true;
-        return;
-      }
+        // ==========================================
+        // 2. 手沖咖啡流體力學與三段式萃取科學模型
+        // ==========================================
+        function calculatePourOverScience() {
+            const { grind, temp, pressure, dose, ratio, roast, dripper } = state;
 
-      if (state.timerState === 'PAUSED') {
-        statusIndicator.className = 'w-3 h-3 rounded-full bg-amber-500';
-        statusBadge.textContent = '已暫停 (PAUSED)';
-        btnMainAction.textContent = '繼續沖煮';
-        btnMainAction.className = 'col-span-1 sm:col-span-2 py-3.5 px-6 rounded-xl font-bold text-white bg-amber-600 hover:bg-amber-700 transition-all shadow-md';
-        return;
-      }
+            // 1. 微米數 (µm) 與細粉比例 (Fines %) 計算
+            // 刻度 1.0 -> 400 µm, 5.5 -> 750 µm, 10.0 -> 1100 µm
+            const microns = Math.round(400 + ((grind - 1.0) / 9.0) * 700);
+            // 研磨越細或豆質越脆，微細粉比例越高
+            const roastFinesMod = roast === 'light' ? 1.12 : roast === 'medium' ? 1.0 : 1.08;
+            const finesPct = +Math.min(28.0, Math.max(5.5, (23.5 - grind * 1.95) * roastFinesMod)).toFixed(1);
 
-      if (state.timerState === 'FINISHED') {
-        statusIndicator.className = 'w-3 h-3 rounded-full bg-emerald-500';
-        statusBadge.textContent = '沖煮完成 (COMPLETED)';
-        currentStageTitle.textContent = '🎉 沖煮完美完成';
-        currentTargetWeight.innerHTML = `${state.calculated.totalWater} <span class="text-2xl font-bold text-coffee-500">g</span>`;
-        stageRemainingDisplay.textContent = '所有階段滴漏完畢';
-        stageInstruction.textContent = '搖晃均勻下壺讓風味交融，倒出細細品嚐您的手沖咖啡！';
-        btnMainAction.textContent = '再次沖煮';
-        btnMainAction.className = 'col-span-1 sm:col-span-2 py-3.5 px-6 rounded-xl font-bold text-white bg-emerald-700 hover:bg-emerald-800 transition-all shadow-md';
-        btnNextStage.disabled = true;
-        return;
-      }
+            // 2. 總注水量、粉層吸水滯留量與實得下壺咖啡液重
+            const totalWater = +(dose * ratio).toFixed(1);
+            // 乾粉約吸收自身重量 2.0 倍的水分
+            const retentionRate = roast === 'dark' ? 2.15 : roast === 'medium' ? 2.0 : 1.92;
+            const retainedWater = +(dose * retentionRate).toFixed(1);
+            const actualYield = +Math.max(dose, totalWater - retainedWater).toFixed(1);
 
-      // RUNNING 狀態
-      statusIndicator.className = 'w-3 h-3 rounded-full bg-emerald-500 animate-pulse';
-      statusBadge.textContent = '沖煮萃取中 (BREWING)';
-      btnMainAction.textContent = '暫停計時';
-      btnMainAction.className = 'col-span-1 sm:col-span-2 py-3.5 px-6 rounded-xl font-bold text-white bg-amber-700 hover:bg-amber-800 transition-all shadow-md';
-      btnNextStage.disabled = false;
+            // 3. 三段式注水配水計畫
+            const bloomWater = +(dose * 2.0).toFixed(1);
+            const remainingWater = Math.max(0, totalWater - bloomWater);
+            const firstPourWater = +(remainingWater * 0.55).toFixed(1);
+            const secondPourWater = +(remainingWater - firstPourWater).toFixed(1);
 
-      const currentStage = STAGE_CONFIGS[state.currentStageIndex];
-      const stageRemaining = Math.max(0, currentStage.duration - state.stageElapsedSeconds);
+            // 4. 細粉遷移與底部濾紙阻塞風險 (Fines Migration & Clogging Risk)
+            // 當研磨過細 (< 4.2) 且注水翻攪力道過大 (> 6.5) 時，細粉會被沖刷至濾紙底部造成嚴重堵水
+            let cloggingRisk = 8 + Math.max(0, (6.0 - grind) * 8.5) + Math.max(0, (pressure - 5.0) * 5.2);
+            if (grind < 4.2 && pressure > 6.2) {
+                cloggingRisk += (4.2 - grind) * (pressure - 6.2) * 7.5;
+            }
+            if (dripper === 'kalita') {
+                cloggingRisk += 7; // 平底濾杯底部排水孔流速較受限
+            }
+            cloggingRisk = Math.min(96, Math.max(5, Math.round(cloggingRisk)));
 
-      currentStageTitle.textContent = currentStage.name;
-      const targetWater = state.calculated.stageTargets[state.currentStageIndex];
-      currentTargetWeight.innerHTML = `${targetWater} <span class="text-2xl font-bold text-coffee-500">g</span>`;
-      stageInstruction.textContent = currentStage.tip;
-      stageRemainingDisplay.textContent = `階段剩餘: ${stageRemaining} 秒`;
-    }
+            // 5. 烘焙度與濾杯幾何修正係數
+            const roastFactors = {
+                light:  { solubility: 0.96, permeability: 0.96, acidMod: 15, aromaMod: 14, sweetMod: 3, bitterMod: -10, bodyMod: -6, name: '淺焙單品' },
+                medium: { solubility: 1.01, permeability: 1.00, acidMod: 0,  aromaMod: 2,  sweetMod: 8, bitterMod: 0,   bodyMod: 4,  name: '中焙平衡' },
+                dark:   { solubility: 1.08, permeability: 1.05, acidMod: -18, aromaMod: -8, sweetMod: 0, bitterMod: 18, bodyMod: 14, name: '深焙醇厚' }
+            }[roast];
 
-    function tick() {
-      state.elapsedSeconds++;
-      state.stageElapsedSeconds++;
+            const dripperFactors = {
+                v60:    { flowSpeed: 1.06, clarityMod: 8,  bodyMod: -3, sweetMod: 0, name: 'V60 錐形濾杯' },
+                kalita: { flowSpeed: 0.89, clarityMod: -4, bodyMod: 8,  sweetMod: 6, name: '平底蛋糕濾杯' }
+            }[dripper];
 
-      const currentStage = STAGE_CONFIGS[state.currentStageIndex];
-      const remainingInStage = currentStage.duration - state.stageElapsedSeconds;
+            // 6. 模擬時間軸 (0 ~ 210 秒，步長 1 秒) 的濾杯水位、注水曲線與下壺滴濾流速
+            const maxSimTime = 210;
+            const timeSeries = [];
+            let slurryWater = 0;      // 濾杯內目前滯留水量
+            let cumulativePoured = 0; // 累積已注水量
+            let cumulativeYield = 0;  // 下壺累積咖啡液重
+            let absorbedSoFar = 0;    // 粉層已吸收水分
+            let drawdownTime = null;  // 滴濾完成時間 (秒)
+            let peakFlow = 0;
 
-      // 階段轉換前 3 秒倒數提示聲
-      if (remainingInStage <= 3 && remainingInStage > 0) {
-        playCountdownBeep();
-      }
+            // 粉床基準滲透係數 (隨研磨變粗而提升)
+            const kPermeability = Math.pow(microns / 750, 1.38) * roastFactors.permeability * dripperFactors.flowSpeed * Math.pow(15.0 / dose, 0.25);
 
-      // 當前階段時間結束
-      if (remainingInStage <= 0) {
-        if (state.currentStageIndex < 2) {
-          // 進入下一階段
-          state.currentStageIndex++;
-          state.stageElapsedSeconds = 0;
-          playStageChangeTone();
-        } else {
-          // 全部完成
-          finishBrewing();
-          return;
+            for (let t = 0; t <= maxSimTime; t++) {
+                // (a) 三段式注水速率 (g/s)
+                let pourRate = 0;
+                if (t >= 0 && t < 10) {
+                    // 0 ~ 10s：悶蒸注水
+                    pourRate = bloomWater / 10;
+                } else if (t >= 30 && t < 72) {
+                    // 30 ~ 72s：第一段同心圓注水
+                    pourRate = firstPourWater / 42;
+                } else if (t >= 78 && t < 115) {
+                    // 78 ~ 115s：第二段柔水注水
+                    pourRate = secondPourWater / 37;
+                }
+
+                cumulativePoured = Math.min(totalWater, cumulativePoured + pourRate);
+                slurryWater += pourRate;
+
+                // (b) 乾粉吸水過程 (主要在前 25 秒悶蒸期完成)
+                if (absorbedSoFar < retainedWater && slurryWater > 0) {
+                    const absorbStep = Math.min(slurryWater * 0.45, retainedWater / 16);
+                    const actualAbsorb = Math.min(retainedWater - absorbedSoFar, absorbStep);
+                    slurryWater -= actualAbsorb;
+                    absorbedSoFar += actualAbsorb;
+                }
+
+                // (c) 下壺滴濾流速計算 (受濾杯內水頭高度 slurryWater、研磨滲透率與後段細粉堵水影響)
+                let dripFlow = 0;
+                if (t < 6) {
+                    // 悶蒸前 6 秒熱水浸潤乾粉，僅極少數滴落
+                    dripFlow = slurryWater > 5 ? 0.15 : 0;
+                } else if (slurryWater > 0.2) {
+                    // 水頭高度驅動效應
+                    const headFactor = Math.pow(Math.max(0, slurryWater) / 65, 0.68);
+                    // 隨時間推移，細粉沉積於濾紙底部造成的阻力衰減
+                    const clogDecay = 1 - (cloggingRisk / 100) * 0.58 * Math.min(1, Math.max(0, (t - 45) / 95));
+                    dripFlow = 2.35 * headFactor * kPermeability * Math.max(0.22, clogDecay);
+                    dripFlow = Math.min(slurryWater, dripFlow);
+                }
+
+                slurryWater = Math.max(0, slurryWater - dripFlow);
+                cumulativeYield = Math.min(actualYield, cumulativeYield + dripFlow);
+
+                if (dripFlow > peakFlow) {
+                    peakFlow = dripFlow;
+                }
+
+                // 判斷是否已完成全部注水且下壺已達目標液重 (滴乾完成)
+                if (drawdownTime === null && t > 115 && (cumulativeYield >= actualYield * 0.985 || slurryWater < 1.2)) {
+                    drawdownTime = t;
+                }
+
+                timeSeries.push({
+                    t,
+                    poured: +cumulativePoured.toFixed(1),
+                    yield: +cumulativeYield.toFixed(1),
+                    flow: +dripFlow.toFixed(2),
+                    slurry: +slurryWater.toFixed(1)
+                });
+            }
+
+            let isClogged = false;
+            if (drawdownTime === null) {
+                drawdownTime = 210;
+                isClogged = true;
+            }
+
+            const avgFlow = +(actualYield / drawdownTime).toFixed(2);
+
+            // 7. 計算手沖萃取率 (Extraction Yield %) 與 咖啡濃度 (TDS %)
+            // 表面積效應 (研磨越細 EY 越高)
+            const grindEYFactor = Math.pow(750 / microns, 0.34);
+            // 接觸時間效應
+            const timeEYFactor = Math.pow(drawdownTime / 134, 0.22);
+            // 水溫熱力學效應
+            const tempEYFactor = 1 + (temp - 91.0) * 0.014;
+            // 注水翻攪動能效應 (翻攪越強，質傳擴散越快，EY 提升)
+            const agitationEYFactor = 0.92 + (pressure / 10.0) * 0.16;
+            // 粉水比稀釋梯度效應 (水量越多，濃度梯度越大，總溶出率 EY 越高)
+            const ratioEYFactor = 1 + (ratio - 15.5) * 0.022;
+
+            let rawEY = 19.8 * grindEYFactor * timeEYFactor * tempEYFactor * agitationEYFactor * ratioEYFactor * roastFactors.solubility;
+            const ey = +Math.max(14.2, Math.min(24.8, rawEY)).toFixed(2);
+
+            // 手沖濃度 TDS (%) = (Dose * EY%) / ActualYield
+            const tds = +((dose * ey) / actualYield).toFixed(2);
+
+            // 8. 計算六維度感官指標 (0 ~ 100)
+            // (1) 果酸明亮感 (Acidity)
+            let acidity = 68 + (20.2 - ey) * 4.5 + (temp - 90.0) * 0.8 + roastFactors.acidMod;
+            acidity = Math.round(Math.max(15, Math.min(96, acidity)));
+
+            // (2) 花果香氣 (Aroma & Floral)
+            const tempIdealDiff = Math.abs(temp - (roast === 'light' ? 92.5 : roast === 'medium' ? 90.0 : 87.5));
+            let aroma = 78 - tempIdealDiff * 2.5 - Math.abs(ey - 20.0) * 3.2 + roastFactors.aromaMod;
+            aroma = Math.round(Math.max(20, Math.min(98, aroma)));
+
+            // (3) 焦糖甜感 (Sweetness) - 在 EY 19.5%~21.0% 且無嚴重堵水時最高
+            const eySweetDiff = Math.abs(ey - 20.1);
+            let sweetness = 86 - Math.pow(eySweetDiff, 1.55) * 5.2 - Math.max(0, cloggingRisk - 35) * 0.35 + roastFactors.sweetMod + dripperFactors.sweetMod;
+            sweetness = Math.round(Math.max(20, Math.min(96, sweetness)));
+
+            // (4) 茶感乾淨度 (Clarity & Tea-like)
+            let clarity = 84 + (ratio - 15.0) * 2.8 - (cloggingRisk * 0.42) - Math.max(0, pressure - 6.5) * 3.5 + dripperFactors.clarityMod;
+            clarity = Math.round(Math.max(18, Math.min(98, clarity)));
+
+            // (5) 醇厚飽滿度 (Body)
+            let body = 62 + (tds - 1.28) * 55 + roastFactors.bodyMod + dripperFactors.bodyMod;
+            body = Math.round(Math.max(20, Math.min(96, body)));
+
+            // (6) 苦澀尾韻 (Bitterness & Dryness)
+            let bitterness = 26 + (ey - 19.8) * 7.8 + (temp - 90.0) * 2.2 + (cloggingRisk * 0.35) + roastFactors.bitterMod;
+            bitterness = Math.round(Math.max(8, Math.min(96, bitterness)));
+
+            // 酸苦平衡指數 (0 = 極酸水感, 50 = 完美酸甜平衡, 100 = 濃苦咬喉)
+            let balanceIndex = 50 + (bitterness - acidity * 0.65) * 0.75 + (ey - 20.0) * 4.5;
+            balanceIndex = Math.max(6, Math.min(94, Math.round(balanceIndex)));
+
+            // 綜合手沖評分
+            let totalScore = Math.round(
+                sweetness * 0.32 +
+                clarity * 0.25 +
+                aroma * 0.20 +
+                (100 - Math.abs(balanceIndex - 50) * 1.5) * 0.23
+            );
+            totalScore = Math.max(38, Math.min(99, totalScore));
+
+            simResult = {
+                microns,
+                finesPct,
+                totalWater,
+                retainedWater,
+                actualYield,
+                bloomWater,
+                firstPourWater,
+                secondPourWater,
+                cloggingRisk,
+                drawdownTime,
+                isClogged,
+                avgFlow,
+                peakFlow: +peakFlow.toFixed(2),
+                ey,
+                tds,
+                acidity,
+                aroma,
+                sweetness,
+                clarity,
+                body,
+                bitterness,
+                balanceIndex,
+                totalScore,
+                timeSeries,
+                roastName: roastFactors.name,
+                dripperName: dripperFactors.name
+            };
+
+            return simResult;
         }
-      }
 
-      renderTimerUI();
-    }
+        // ==========================================
+        // 3. 更新介面文字與咖啡師智慧診斷
+        // ==========================================
+        function updateUI() {
+            calculatePourOverScience();
 
-    function startTimer() {
-      initAudio();
-      state.timerState = 'RUNNING';
-      if (state.elapsedSeconds === 0) {
-        playStageChangeTone();
-      }
-      state.timerInterval = setInterval(tick, 1000);
-      renderTimerUI();
-    }
+            // 1. 研磨度面板
+            document.getElementById('grindValText').textContent = state.grind.toFixed(1);
+            document.getElementById('micronValText').textContent = simResult.microns;
+            document.getElementById('finesPctText').textContent = `${simResult.finesPct}%`;
 
-    function pauseTimer() {
-      state.timerState = 'PAUSED';
-      clearInterval(state.timerInterval);
-      renderTimerUI();
-    }
+            let grindDesc = '二號砂糖中細';
+            if (state.grind < 3.0) grindDesc = '極細手沖 (易堵水)';
+            else if (state.grind < 4.8) grindDesc = '中細偏細 (細砂糖)';
+            else if (state.grind <= 6.5) grindDesc = '二號砂糖中細';
+            else if (state.grind <= 8.2) grindDesc = '中粗研磨 (粗砂糖)';
+            else grindDesc = '粗磨法壓粒徑';
+            document.getElementById('grindDescText').textContent = grindDesc;
 
-    function finishBrewing() {
-      clearInterval(state.timerInterval);
-      state.timerState = 'FINISHED';
-      playFinishFanfare();
-      renderTimerUI();
-    }
+            // 2. 水溫與注水翻攪壓力面板
+            document.getElementById('tempValText').textContent = state.temp.toFixed(1);
+            document.getElementById('pressureValText').textContent = state.pressure.toFixed(1);
 
-    function resetTimer() {
-      clearInterval(state.timerInterval);
-      state.timerState = 'IDLE';
-      state.currentStageIndex = 0;
-      state.elapsedSeconds = 0;
-      state.stageElapsedSeconds = 0;
-      renderTimerUI();
-    }
+            const kpa = (0.35 + state.pressure * 0.1).toFixed(2);
+            let agDesc = '穩定同心圓';
+            if (state.pressure < 3.0) agDesc = '低水柱柔水中心注';
+            else if (state.pressure <= 6.5) agDesc = '穩定同心圓繞圈';
+            else if (state.pressure <= 8.5) agDesc = '高水柱大圈強翻攪';
+            else agDesc = '極強衝擊翻攪粉層';
+            document.getElementById('pressureEquivText').textContent = `~${kpa} kPa (${agDesc})`;
 
-    function jumpToNextStage() {
-      if (state.timerState !== 'RUNNING') return;
-      if (state.currentStageIndex < 2) {
-        // 累計整體時間補齊
-        const currentConfig = STAGE_CONFIGS[state.currentStageIndex];
-        const skipDiff = currentConfig.duration - state.stageElapsedSeconds;
-        state.elapsedSeconds += skipDiff;
-        state.currentStageIndex++;
-        state.stageElapsedSeconds = 0;
-        playStageChangeTone();
-        renderTimerUI();
-      } else {
-        finishBrewing();
-      }
-    }
+            // 3. 粉水比與注水量換算面板
+            document.getElementById('doseValText').textContent = state.dose.toFixed(1);
+            document.getElementById('ratioValText').textContent = state.ratio.toFixed(1);
+            document.getElementById('brewRatioBadge').textContent = `粉水比 1 : ${state.ratio.toFixed(1)}`;
+            document.getElementById('totalWaterText').textContent = Math.round(simResult.totalWater);
+            document.getElementById('retainedWaterText').textContent = Math.round(simResult.retainedWater);
+            document.getElementById('actualYieldText').textContent = Math.round(simResult.actualYield);
 
-    // --- 8. 事件監聽綁定 ---
-    roastBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        state.roast = btn.dataset.val;
-        updateButtonGroupUI();
-        recalculateParams();
-      });
-    });
+            document.getElementById('roastBadge').textContent = simResult.roastName;
+            document.getElementById('dripperBadge').textContent = simResult.dripperName;
 
-    flavorBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        state.flavor = btn.dataset.val;
-        updateButtonGroupUI();
-        recalculateParams();
-      });
-    });
+            // 4. 模擬器電子秤與堵水風險條
+            if (!state.isBrewing) {
+                document.getElementById('liveTimerText').textContent = simResult.isClogged ? '>03:30' : formatTimeMMSS(simResult.drawdownTime);
+                document.getElementById('livePouredText').textContent = simResult.totalWater.toFixed(1);
+                document.getElementById('liveYieldText').textContent = simResult.actualYield.toFixed(1);
+            }
 
-    doseInput.addEventListener('change', (e) => {
-      let val = parseFloat(e.target.value);
-      if (isNaN(val) || val < 10) val = 10;
-      if (val > 30) val = 30;
-      state.dose = val;
-      e.target.value = val;
-      recalculateParams();
-    });
+            const clogBar = document.getElementById('clogRiskBar');
+            const clogText = document.getElementById('clogRiskText');
+            clogBar.style.width = `${simResult.cloggingRisk}%`;
+            clogText.textContent = `${simResult.cloggingRisk}%`;
+            if (simResult.cloggingRisk < 30) {
+                clogBar.className = 'h-full bg-emerald-400 transition-all duration-300';
+                clogText.className = 'font-mono text-xs font-bold text-emerald-400';
+            } else if (simResult.cloggingRisk < 60) {
+                clogBar.className = 'h-full bg-amber-400 transition-all duration-300';
+                clogText.className = 'font-mono text-xs font-bold text-amber-400';
+            } else {
+                clogBar.className = 'h-full bg-rose-500 transition-all duration-300';
+                clogText.className = 'font-mono text-xs font-bold text-rose-400';
+            }
 
-    btnDoseDec.addEventListener('click', () => {
-      if (state.dose > 10) {
-        state.dose = Math.max(10, state.dose - 1);
-        doseInput.value = state.dose;
-        recalculateParams();
-      }
-    });
+            // 5. 頂部 KPI 卡片更新
+            document.getElementById('kpiTime').textContent = simResult.isClogged ? '3:30+' : formatTimeMMSS(simResult.drawdownTime);
+            document.getElementById('kpiTimeSec').textContent = `(${simResult.drawdownTime}s)`;
+            const kpiTimeStatus = document.getElementById('kpiTimeStatus');
+            if (simResult.drawdownTime >= 115 && simResult.drawdownTime <= 158) {
+                kpiTimeStatus.textContent = '✓ 理想時間窗 (2:00-2:35)';
+                kpiTimeStatus.className = 'text-[11px] text-emerald-400 font-medium';
+            } else if (simResult.drawdownTime < 115) {
+                kpiTimeStatus.textContent = '⚠ 流速偏快 (接觸時間短)';
+                kpiTimeStatus.className = 'text-[11px] text-amber-400 font-medium';
+            } else {
+                kpiTimeStatus.textContent = '⚠ 滴濾過慢 (細粉堵水)';
+                kpiTimeStatus.className = 'text-[11px] text-rose-400 font-medium';
+            }
 
-    btnDoseInc.addEventListener('click', () => {
-      if (state.dose < 30) {
-        state.dose = Math.min(30, state.dose + 1);
-        doseInput.value = state.dose;
-        recalculateParams();
-      }
-    });
+            const kpiEY = document.getElementById('kpiEY');
+            kpiEY.textContent = simResult.ey.toFixed(2);
+            kpiEY.className = simResult.ey >= 18.0 && simResult.ey <= 22.0
+                ? 'text-2xl font-mono font-bold text-emerald-400'
+                : simResult.ey < 18.0
+                ? 'text-2xl font-mono font-bold text-amber-400'
+                : 'text-2xl font-mono font-bold text-rose-400';
 
-    btnMainAction.addEventListener('click', () => {
-      if (state.timerState === 'IDLE' || state.timerState === 'PAUSED') {
-        startTimer();
-      } else if (state.timerState === 'RUNNING') {
-        pauseTimer();
-      } else if (state.timerState === 'FINISHED') {
-        resetTimer();
-        startTimer();
-      }
-    });
+            document.getElementById('kpiTDS').textContent = simResult.tds.toFixed(2);
+            document.getElementById('kpiFlow').textContent = simResult.avgFlow.toFixed(2);
+            document.getElementById('kpiPeakFlow').textContent = `峰值滴濾 ${simResult.peakFlow.toFixed(2)} g/s`;
+            document.getElementById('kpiScore').textContent = simResult.totalScore;
 
-    btnNextStage.addEventListener('click', jumpToNextStage);
-    btnReset.addEventListener('click', resetTimer);
+            document.getElementById('pourScheduleInfo').textContent =
+                `三段配水：悶蒸 ${Math.round(simResult.bloomWater)}g / 一段 +${Math.round(simResult.firstPourWater)}g / 二段 +${Math.round(simResult.secondPourWater)}g`;
 
-    // --- 初始化執行 ---
-    updateButtonGroupUI();
-    recalculateParams();
-    renderTimerUI();
-  </script>
+            // 6. 六維度感官條更新
+            document.getElementById('balancePointer').style.left = `calc(${simResult.balanceIndex}% - 7px)`;
+
+            document.getElementById('acidityValText').textContent = `${simResult.acidity}%`;
+            document.getElementById('acidityBar').style.width = `${simResult.acidity}%`;
+            document.getElementById('acidityQualText').textContent =
+                simResult.acidity > 78 ? '明亮柑橘與莓果果酸' :
+                simResult.acidity > 50 ? '溫潤蘋果與熟果酸質' : '柔和低酸感';
+
+            document.getElementById('aromaValText').textContent = `${simResult.aroma}%`;
+            document.getElementById('aromaBar').style.width = `${simResult.aroma}%`;
+            document.getElementById('aromaQualText').textContent =
+                simResult.aroma > 78 ? '茉莉白花與佛手柑香氣奔放' :
+                simResult.aroma > 55 ? '烤堅果與焦糖甜香' : '沉穩木質與可可調';
+
+            document.getElementById('sweetnessValText').textContent = `${simResult.sweetness}%`;
+            document.getElementById('sweetnessBar').style.width = `${simResult.sweetness}%`;
+            document.getElementById('sweetnessQualText').textContent =
+                simResult.sweetness > 78 ? '蜂蜜與蔗糖般飽滿清甜' :
+                simResult.sweetness > 55 ? '溫和麥芽糖甜感' : '甜感單薄被酸苦掩蓋';
+
+            document.getElementById('clarityValText').textContent = `${simResult.clarity}%`;
+            document.getElementById('clarityBar').style.width = `${simResult.clarity}%`;
+            document.getElementById('clarityQualText').textContent =
+                simResult.clarity > 80 ? '清澈透亮如高山烏龍茶感' :
+                simResult.clarity > 55 ? '口感乾淨度適中' : '細粉感重、尾韻略混濁';
+
+            document.getElementById('bodyValText').textContent = `${simResult.body}%`;
+            document.getElementById('bodyBar').style.width = `${simResult.body}%`;
+            document.getElementById('bodyQualText').textContent =
+                simResult.body > 78 ? '圓潤厚實、包覆感強' :
+                simResult.body > 55 ? '絲滑均衡、茶湯順口' : '酒體輕薄偏水感';
+
+            document.getElementById('bitternessValText').textContent = `${simResult.bitterness}%`;
+            document.getElementById('bitternessBar').style.width = `${simResult.bitterness}%`;
+            document.getElementById('bitternessQualText').textContent =
+                simResult.bitterness > 65 ? '明顯焦苦與舌根乾澀感' :
+                simResult.bitterness > 38 ? '黑巧克力般微苦回甘' : '極低苦澀、尾韻乾淨清爽';
+
+            // 7. 更新咖啡師 AI 診斷與所有 Canvas 圖表
+            updatePourOverDiagnostic();
+            drawGrindPreview();
+            drawSCAChart();
+            drawFlowChart();
+            drawFlavorRadar();
+            if (!state.isBrewing) {
+                drawDripperSimulation(simResult.drawdownTime);
+            }
+        }
+
+        // ==========================================
+        // 4. 手沖咖啡師智慧感官診斷邏輯
+        // ==========================================
+        function updatePourOverDiagnostic() {
+            const { ey, tds, drawdownTime, cloggingRisk, totalWater, actualYield } = simResult;
+            const matrixBadge = document.getElementById('matrixZoneBadge');
+            const statusPill = document.getElementById('diagnosticStatusPill');
+            const mainText = document.getElementById('diagnosticMainText');
+            const actionList = document.getElementById('diagnosticActionList');
+            const flavorContainer = document.getElementById('flavorNotesContainer');
+            const kpiFlavorTag = document.getElementById('kpiFlavorTag');
+
+            const isIdealEY = ey >= 18.0 && ey <= 22.0;
+            const isIdealTDS = tds >= 1.15 && tds <= 1.45;
+
+            let zoneName = '';
+            let zoneClass = '';
+            let summary = '';
+            let actions = [];
+            let tags = [];
+
+            if (isIdealEY && isIdealTDS && cloggingRisk < 50) {
+                zoneName = 'SCA 理想金杯區';
+                zoneClass = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+                kpiFlavorTag.textContent = '花果明亮・茶感清甜';
+                kpiFlavorTag.className = 'text-[11px] text-emerald-400 font-medium';
+
+                summary = `目前以 1:${state.ratio.toFixed(1)} 粉水比（總注水 ${Math.round(totalWater)}ml，實得 ${Math.round(actualYield)}ml 咖啡液），於 ${formatTimeMMSS(drawdownTime)} 完成滴濾。萃取率達 ${ey}%、濃度為 ${tds}%，精準落入 SCA 手沖金杯核心！前段花果酸香活潑，中段蔗糖甜感飽滿，且茶湯乾淨無雜澀。`;
+                actions = [
+                    `✓ 當前研磨度 (#${state.grind.toFixed(1)} / 約 ${simResult.microns}µm) 與水溫 (${state.temp}°C) 完美契合，建議固定此參數作為基準。`,
+                    `若想讓茶感更輕盈、花香更突出，可將粉水比微調至 1:${(state.ratio + 0.5).toFixed(1)} 或改用 V60 錐形濾杯。`,
+                    `若想增加口感厚度 (Body)，可在第二段注水時稍微提高繞圈翻攪力道，或改用平底蛋糕濾杯。`
+                ];
+                tags = state.roast === 'light'
+                    ? ['茉莉白花香', '水蜜桃甜感', '佛手柑柑橘', '高山烏龍茶感']
+                    : state.roast === 'medium'
+                    ? ['烘烤榛果', '柑橘柔和果酸', '焦糖奶油甜', '尾韻綿長']
+                    : ['濃郁黑巧克力', '焦糖太妃糖', '圓潤厚實脂感', '回甘無澀味'];
+            } else if (ey < 18.0) {
+                zoneName = tds < 1.15 ? '萃取不足且偏淡 (Under & Weak)' : '萃取不足 (Under-extracted)';
+                zoneClass = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
+                kpiFlavorTag.textContent = '水感偏酸・甜感未出';
+                kpiFlavorTag.className = 'text-[11px] text-amber-400 font-medium';
+
+                summary = `目前總滴濾時間僅 ${formatTimeMMSS(drawdownTime)}，萃取率為 ${ey}%（低於 18% 金杯下限），濃度 TDS 為 ${tds}%。由於粉層水阻偏低或水溫、翻攪動能不足，熱水過快流過粉床，只帶出前段表層的有機酸，中段的焦糖甜感尚未溶出，入口呈現尖酸、水感重且尾韻短促。`;
+                if (state.grind > 5.8) {
+                    actions.push(`🔧 【調細研磨度】將磨豆機由 #${state.grind.toFixed(1)} 調細至 #4.8 ~ #5.5（約 700~750µm），增加粉床接觸面積並延長滴濾時間至 2分10秒左右。`);
+                }
+                if (state.temp < 90.0) {
+                    actions.push(`🌡️ 【拉高沖煮水溫】目前水溫 (${state.temp}°C) 偏低，建議提升至 91°C ~ 93°C 以提高芳香物與糖分溶解速率。`);
+                }
+                if (state.pressure < 4.5) {
+                    actions.push(`💧 【加強注水繞圈翻攪】第一段注水時可適度提高水柱與同心圓繞圈力道（調至 Lv.5.0~6.5），幫助粉層充分翻攪釋放風味。`);
+                }
+                if (actions.length === 0) {
+                    actions.push(`⚖️ 【增加注水量或改用平底濾杯】可將粉水比拉長至 1:16.0，或切換為平底蛋糕濾杯增加浸泡時間。`);
+                }
+                tags = ['檸檬尖酸感', '青草微澀', '茶湯水感薄', '甜感尚未釋放'];
+            } else if (ey > 22.0 || cloggingRisk >= 60) {
+                zoneName = cloggingRisk >= 60 ? '細粉堵水與局部過萃' : '過度萃取 (Over-extracted)';
+                zoneClass = 'bg-rose-500/20 text-rose-300 border-rose-500/40';
+                kpiFlavorTag.textContent = '苦澀咬喉・尾韻混濁';
+                kpiFlavorTag.className = 'text-[11px] text-rose-400 font-medium';
+
+                if (cloggingRisk >= 60) {
+                    summary = `偵測到高風險細粉阻塞（堵水風險 ${cloggingRisk}%），總滴濾時間拖長至 ${formatTimeMMSS(drawdownTime)}！因研磨過細 (${simResult.microns}µm) 加上強水柱翻攪，大量微細粉沉積堵住濾紙毛細孔，導致咖啡粉在後段長時間浸泡於高溫苦澀水中，產生明顯咬喉澀感。`;
+                } else {
+                    summary = `目前萃取率高達 ${ey}%（超過 22% 上限），滴濾時間達 ${formatTimeMMSS(drawdownTime)}。過高的水溫或過強的翻攪把咖啡豆木質纖維中的多酚類與綠原酸內酯大量萃出，掩蓋了前段的花果香氣，入口呈現苦澀與舌面乾燥感。`;
+                }
+
+                if (state.grind < 5.0) {
+                    actions.push(`🔧 【調粗研磨度】將研磨度由 #${state.grind.toFixed(1)} 放粗至 #5.5 ~ #6.2（約 750~820µm），減少微細粉比例並讓水流順暢通過。`);
+                }
+                if (state.pressure > 6.0) {
+                    actions.push(`💧 【放柔第二段注水】目前注水翻攪力道 (Lv.${state.pressure.toFixed(1)}) 偏強易沖刷細粉，建議降至 Lv.4.0~5.0，並在尾段改為中心柔水注水。`);
+                }
+                if (state.temp > 91.0 && state.roast !== 'light') {
+                    actions.push(`🌡️ 【降低沖煮水溫】中深焙豆建議將水溫由 ${state.temp}°C 調降至 86°C ~ 89°C，避免後段焦苦味溶出。`);
+                }
+                actions.push(`⏱️ 【提早移開濾杯（截斷尾段）】實作時若超過 2分25秒 尚未滴乾，建議直接移開濾杯捨棄最後幾滴苦澀水。`);
+                tags = ['木質乾澀感', '焦苦尾韻', '舌根刮舌 (Astringent)', '花果香被掩蓋'];
+            } else {
+                // EY 在 18~22% 理想範圍，但 TDS 過濃 (>1.45%) 或偏淡 (<1.15%)
+                zoneName = tds > 1.45 ? '高濃度醇厚型 (適合冰手沖基底)' : '低濃度清雅茶感型';
+                zoneClass = 'bg-sky-500/20 text-sky-300 border-sky-500/40';
+                kpiFlavorTag.textContent = tds > 1.45 ? '濃郁厚實・冰鎮基底' : '清雅茶感・輕盈順口';
+                kpiFlavorTag.className = 'text-[11px] text-sky-400 font-medium';
+
+                summary = `目前萃取率為 ${ey}%（落在 18%~22% 黃金區間），酸甜物質溶出比例健康；但咖啡濃度 TDS 為 ${tds}%，屬於${tds > 1.45 ? '高濃度厚實風格（非常適合直接加入冰塊製作日式急冷冰手沖，或兌入少量熱水 Bypass 拉開層次）' : '低濃度清雅茶感風格，口感極為乾淨輕盈，但醇厚度稍淡'}。`;
+                actions = [
+                    tds > 1.45
+                        ? `⚖️ 若作為熱手沖直接飲用覺得太濃，可將粉水比由 1:${state.ratio.toFixed(1)} 調高至 1:15.5 ~ 1:16.0。`
+                        : `⚖️ 若希望提升茶湯飽滿度與甜感濃度，可將粉水比由 1:${state.ratio.toFixed(1)} 縮減至 1:15.0 ~ 1:15.5。`,
+                    `✓ 目前研磨度與水溫配比良好，無明顯過萃苦澀或欠萃尖酸問題。`
+                ];
+                tags = tds > 1.45
+                    ? ['高濃度飽滿', '適合加冰急冷', '焦糖熟果調', '醇厚包覆感']
+                    : ['極致清澈茶感', '淡雅花香', '輕盈無負擔', '尾韻甘甜'];
+            }
+
+            matrixBadge.textContent = zoneName;
+            matrixBadge.className = `text-xs font-bold px-2.5 py-1 rounded-lg border ${zoneClass}`;
+            statusPill.textContent = zoneName;
+            statusPill.className = `px-3 py-1 rounded-full text-xs font-bold border self-start md:self-auto ${zoneClass}`;
+            mainText.textContent = summary;
+
+            actionList.innerHTML = actions.map(a => `<li class="leading-relaxed flex items-start gap-1.5"><span class="text-ambercup-400">•</span><span>${a}</span></li>`).join('');
+            flavorContainer.innerHTML = tags.map(t => `<span class="text-xs px-2.5 py-1 rounded-md bg-roast-950 text-ambercup-300 border border-roast-700">${t}</span>`).join('');
+        }
+
+        // ==========================================
+        // 5. HTML5 Canvas 高解析度科學圖表繪製
+        // ==========================================
+        function setupHiDPICanvas(canvas) {
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            const width = rect.width || 300;
+            const height = rect.height || 200;
+            if (canvas.width !== width * dpr || canvas.height !== height * dpr) {
+                canvas.width = width * dpr;
+                canvas.height = height * dpr;
+            }
+            const ctx = canvas.getContext('2d');
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            return { ctx, width, height };
+        }
+
+        // 5.1 研磨粒徑與微細粉預覽小圖
+        function drawGrindPreview() {
+            const canvas = document.getElementById('grindPreviewCanvas');
+            const { ctx, width, height } = setupHiDPICanvas(canvas);
+            ctx.clearRect(0, 0, width, height);
+
+            const baseRadius = 1.6 + ((state.grind - 1.0) / 9.0) * 3.2;
+            const count = Math.floor(42 - state.grind * 2.2);
+            const roastColor = state.roast === 'light' ? '#c68853' : state.roast === 'medium' ? '#8c532b' : '#4f2c14';
+
+            // 繪製主顆粒 (多邊形模擬手沖砍豆顆粒感)
+            for (let i = 0; i < count; i++) {
+                const seed = (i * 9301 + 49297) % 233280;
+                const rand1 = seed / 233280;
+                const rand2 = ((seed * 7) % 233280) / 233280;
+                const x = 7 + rand1 * (width - 14);
+                const y = 7 + rand2 * (height - 20);
+                const r = baseRadius * (0.75 + (i % 4) * 0.15);
+
+                ctx.beginPath();
+                ctx.arc(x, y, r, 0, Math.PI * 2);
+                ctx.fillStyle = roastColor;
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(228, 196, 156, 0.35)';
+                ctx.lineWidth = 0.7;
+                ctx.stroke();
+            }
+
+            // 繪製微細粉 (Fines) 點綴
+            const finesDots = Math.round(simResult.finesPct * 1.2);
+            ctx.fillStyle = '#e4c49c';
+            for (let j = 0; j < finesDots; j++) {
+                const fx = ((j * 37) % (width - 8)) + 4;
+                const fy = ((j * 53) % (height - 16)) + 4;
+                ctx.fillRect(fx, fy, 1.3, 1.3);
+            }
+        }
+
+        // 5.2 圖表一：SCA 手沖金杯萃取控制圖 (EY 14~25%, TDS 0.80~1.85%)
+        function drawSCAChart() {
+            const canvas = document.getElementById('scaChartCanvas');
+            const { ctx, width, height } = setupHiDPICanvas(canvas);
+            ctx.clearRect(0, 0, width, height);
+
+            const pad = { top: 22, right: 24, bottom: 38, left: 48 };
+            const plotW = width - pad.left - pad.right;
+            const plotH = height - pad.top - pad.bottom;
+
+            const minEY = 14, maxEY = 25;
+            const minTDS = 0.80, maxTDS = 1.85;
+
+            const toX = ey => pad.left + ((ey - minEY) / (maxEY - minEY)) * plotW;
+            const toY = tds => pad.top + plotH - ((tds - minTDS) / (maxTDS - minTDS)) * plotH;
+
+            // 1. 背景網格與座標軸刻度
+            ctx.strokeStyle = 'rgba(215, 161, 100, 0.1)';
+            ctx.lineWidth = 1;
+            ctx.font = '10px "JetBrains Mono", monospace';
+            ctx.fillStyle = 'rgba(249, 243, 235, 0.5)';
+
+            for (let ey = 14; ey <= 25; ey += 2) {
+                const x = toX(ey);
+                ctx.beginPath();
+                ctx.moveTo(x, pad.top);
+                ctx.lineTo(x, pad.top + plotH);
+                ctx.stroke();
+                ctx.textAlign = 'center';
+                ctx.fillText(`${ey}%`, x, pad.top + plotH + 15);
+            }
+
+            for (let tds = 0.85; tds <= 1.85; tds += 0.20) {
+                const y = toY(tds);
+                ctx.beginPath();
+                ctx.moveTo(pad.left, y);
+                ctx.lineTo(pad.left + plotW, y);
+                ctx.stroke();
+                ctx.textAlign = 'right';
+                ctx.fillText(`${tds.toFixed(2)}%`, pad.left - 5, y + 3);
+            }
+
+            // 2. 繪製粉水比參考對角斜線 (1:13, 1:15, 1:16, 1:18)
+            // 扣除約 2.0 倍粉重吸水後，TDS = EY / (Ratio - 2.0)
+            const ratios = [13, 15, 16, 18];
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(pad.left, pad.top, plotW, plotH);
+            ctx.clip();
+
+            ratios.forEach(r => {
+                const effDivisor = r - 2.0;
+                ctx.beginPath();
+                ctx.setLineDash([4, 4]);
+                ctx.strokeStyle = r === 16 ? 'rgba(215, 161, 100, 0.5)' : 'rgba(249, 243, 235, 0.18)';
+                ctx.lineWidth = r === 16 ? 1.5 : 1;
+
+                const x1 = toX(minEY), y1 = toY(minEY / effDivisor);
+                const x2 = toX(maxEY), y2 = toY(maxEY / effDivisor);
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+
+                // 斜線文字標籤
+                const labelEY = r === 13 ? 18.8 : r === 15 ? 21.8 : r === 16 ? 23.2 : 23.8;
+                const labelTDS = labelEY / effDivisor;
+                ctx.fillStyle = 'rgba(215, 161, 100, 0.8)';
+                ctx.font = '10px "JetBrains Mono", monospace';
+                ctx.fillText(`1:${r}`, toX(labelEY) - 14, toY(labelTDS) - 5);
+            });
+            ctx.setLineDash([]);
+
+            // 3. 繪製 SCA 手沖理想金杯區 (EY 18~22%, TDS 1.15~1.45%)
+            const idealX = toX(18);
+            const idealY = toY(1.45);
+            const idealW = toX(22) - idealX;
+            const idealH = toY(1.15) - idealY;
+
+            const grad = ctx.createLinearGradient(idealX, idealY, idealX + idealW, idealY + idealH);
+            grad.addColorStop(0, 'rgba(16, 185, 129, 0.26)');
+            grad.addColorStop(1, 'rgba(215, 161, 100, 0.22)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(idealX, idealY, idealW, idealH);
+
+            ctx.strokeStyle = 'rgba(52, 211, 153, 0.85)';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(idealX, idealY, idealW, idealH);
+
+            // 象限文字標示
+            ctx.font = 'bold 11px "Noto Sans TC", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = 'rgba(52, 211, 153, 0.95)';
+            ctx.fillText('SCA 理想金杯區', idealX + idealW / 2, idealY + idealH / 2 + 4);
+
+            ctx.font = '10px "Noto Sans TC", sans-serif';
+            ctx.fillStyle = 'rgba(251, 191, 36, 0.75)';
+            ctx.fillText('萃取不足 (尖酸青草)', toX(16.0), toY(1.30));
+
+            ctx.fillStyle = 'rgba(244, 63, 94, 0.75)';
+            ctx.fillText('過度萃取 (苦澀咬喉)', toX(23.5), toY(1.30));
+
+            ctx.fillStyle = 'rgba(249, 243, 235, 0.45)';
+            ctx.fillText('濃郁厚重區 (Strong)', toX(20.0), toY(1.68));
+            ctx.fillText('清雅偏淡區 (Weak/Tea-like)', toX(20.0), toY(0.96));
+
+            // 4. 繪製當前手沖參數落點
+            const curX = toX(Math.max(minEY, Math.min(maxEY, simResult.ey)));
+            const curY = toY(Math.max(minTDS, Math.min(maxTDS, simResult.tds)));
+
+            ctx.beginPath();
+            ctx.setLineDash([2, 3]);
+            ctx.strokeStyle = 'rgba(249, 243, 235, 0.4)';
+            ctx.moveTo(curX, pad.top);
+            ctx.lineTo(curX, pad.top + plotH);
+            ctx.moveTo(pad.left, curY);
+            ctx.lineTo(pad.left + plotW, curY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.beginPath();
+            ctx.arc(curX, curY, 12, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(215, 161, 100, 0.32)';
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(curX, curY, 6, 0, Math.PI * 2);
+            ctx.fillStyle = '#f9f3eb';
+            ctx.fill();
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#d7a164';
+            ctx.stroke();
+
+            // 落點數值標籤
+            const tagText = `EY ${simResult.ey}% | TDS ${simResult.tds}%`;
+            ctx.font = 'bold 10px "JetBrains Mono", monospace';
+            const textW = ctx.measureText(tagText).width + 10;
+            const boxX = Math.min(width - pad.right - textW, Math.max(pad.left, curX - textW / 2));
+            const boxY = curY - 26 < pad.top ? curY + 12 : curY - 24;
+
+            ctx.fillStyle = 'rgba(11, 9, 8, 0.92)';
+            ctx.fillRect(boxX, boxY, textW, 16);
+            ctx.strokeStyle = '#d7a164';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(boxX, boxY, textW, 16);
+            ctx.fillStyle = '#f9f3eb';
+            ctx.textAlign = 'center';
+            ctx.fillText(tagText, boxX + textW / 2, boxY + 11);
+
+            ctx.restore();
+
+            // 軸標題
+            ctx.fillStyle = 'rgba(249, 243, 235, 0.75)';
+            ctx.font = '11px "Noto Sans TC", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('萃取率 Extraction Yield (%) ➔', pad.left + plotW / 2, height - 6);
+
+            ctx.save();
+            ctx.translate(13, pad.top + plotH / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('濃度 TDS (%) ➔', 0, 0);
+            ctx.restore();
+        }
+
+        // 點擊圖表一任意位置反推建議的粉水比與研磨度
+        document.getElementById('scaChartCanvas').addEventListener('click', function(e) {
+            const rect = this.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+
+            const pad = { top: 22, right: 24, bottom: 38, left: 48 };
+            const plotW = rect.width - pad.left - pad.right;
+            const plotH = rect.height - pad.top - pad.bottom;
+
+            if (clickX < pad.left || clickX > pad.left + plotW || clickY < pad.top || clickY > pad.top + plotH) return;
+
+            const targetEY = 14 + ((clickX - pad.left) / plotW) * (25 - 14);
+            const targetTDS = 1.85 - ((clickY - pad.top) / plotH) * (1.85 - 0.80);
+
+            // 反推對應的粉水比 (Ratio = EY / TDS + 2.0) 與研磨度
+            let impliedRatio = Math.round(((targetEY / targetTDS) + 2.0) * 2) / 2;
+            impliedRatio = Math.max(12.0, Math.min(19.0, impliedRatio));
+
+            let impliedGrind = +(5.5 * Math.pow(20.0 / targetEY, 1.55)).toFixed(1);
+            impliedGrind = Math.max(1.5, Math.min(9.5, impliedGrind));
+
+            state.ratio = impliedRatio;
+            state.grind = impliedGrind;
+            ratioSlider.value = impliedRatio;
+            grindSlider.value = impliedGrind;
+            updateUI();
+        });
+
+        // 5.3 圖表二：三段式注水時間軸、滴濾流速與累積水量曲線圖
+        function drawFlowChart() {
+            const canvas = document.getElementById('flowChartCanvas');
+            const { ctx, width, height } = setupHiDPICanvas(canvas);
+            ctx.clearRect(0, 0, width, height);
+
+            const pad = { top: 24, right: 44, bottom: 38, left: 42 };
+            const plotW = width - pad.left - pad.right;
+            const plotH = height - pad.top - pad.bottom;
+
+            const maxT = 195;
+            const maxWeight = Math.max(300, Math.ceil((simResult.totalWater + 20) / 50) * 50); // 右軸 g
+            const maxFlow = 4.0; // 左軸 g/s
+
+            const toX = t => pad.left + (t / maxT) * plotW;
+            const toYFlow = f => pad.top + plotH - (Math.min(maxFlow, f) / maxFlow) * plotH;
+            const toYWeight = w => pad.top + plotH - (Math.min(maxWeight, w) / maxWeight) * plotH;
+
+            // 1. 繪製手沖黃金完萃時間窗 (120s ~ 155s)
+            const idealX1 = toX(120);
+            const idealX2 = toX(155);
+            ctx.fillStyle = 'rgba(16, 185, 129, 0.11)';
+            ctx.fillRect(idealX1, pad.top, idealX2 - idealX1, plotH);
+            ctx.strokeStyle = 'rgba(16, 185, 129, 0.35)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(idealX1, pad.top, idealX2 - idealX1, plotH);
+
+            // 2. 標示三段注水時間分隔淡背景
+            ctx.fillStyle = 'rgba(215, 161, 100, 0.05)';
+            ctx.fillRect(toX(0), pad.top, toX(30) - toX(0), plotH);
+            ctx.fillRect(toX(78), pad.top, toX(115) - toX(78), plotH);
+
+            // 3. 網格與軸刻度
+            ctx.strokeStyle = 'rgba(215, 161, 100, 0.1)';
+            ctx.font = '10px "JetBrains Mono", monospace';
+
+            for (let t = 0; t <= maxT; t += 30) {
+                const x = toX(t);
+                ctx.beginPath();
+                ctx.moveTo(x, pad.top);
+                ctx.lineTo(x, pad.top + plotH);
+                ctx.stroke();
+                ctx.fillStyle = 'rgba(249, 243, 235, 0.5)';
+                ctx.textAlign = 'center';
+                ctx.fillText(`${t}s`, x, pad.top + plotH + 15);
+            }
+
+            // 左軸：滴濾流速 (g/s)
+            for (let f = 0; f <= 4.0; f += 1.0) {
+                const y = toYFlow(f);
+                ctx.beginPath();
+                ctx.moveTo(pad.left, y);
+                ctx.lineTo(pad.left + plotW, y);
+                ctx.stroke();
+                ctx.fillStyle = 'rgba(56, 189, 248, 0.85)';
+                ctx.textAlign = 'right';
+                ctx.fillText(f.toFixed(1), pad.left - 5, y + 3);
+            }
+
+            // 右軸：累積水量/液重 (g)
+            for (let w = 0; w <= maxWeight; w += Math.round(maxWeight / 4)) {
+                const y = toYWeight(w);
+                ctx.fillStyle = 'rgba(215, 161, 100, 0.85)';
+                ctx.textAlign = 'left';
+                ctx.fillText(`${w}g`, pad.left + plotW + 5, y + 3);
+            }
+
+            const series = simResult.timeSeries;
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(pad.left, pad.top, plotW, plotH);
+            ctx.clip();
+
+            // 4. 繪製三段式累積注水量虛線 (Poured Water)
+            ctx.beginPath();
+            ctx.setLineDash([4, 3]);
+            series.forEach((pt, idx) => {
+                if (pt.t <= maxT) {
+                    const x = toX(pt.t);
+                    const y = toYWeight(pt.poured);
+                    if (idx === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+            });
+            ctx.strokeStyle = 'rgba(249, 243, 235, 0.55)';
+            ctx.lineWidth = 1.6;
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // 5. 繪製滴濾流速曲線 (藍色漸層面積 + 實線)
+            ctx.beginPath();
+            series.forEach((pt, idx) => {
+                if (pt.t <= maxT) {
+                    const x = toX(pt.t);
+                    const y = toYFlow(pt.flow);
+                    if (idx === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+            });
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.lineTo(toX(maxT), pad.top + plotH);
+            ctx.lineTo(toX(0), pad.top + plotH);
+            ctx.closePath();
+            const flowGrad = ctx.createLinearGradient(0, pad.top, 0, pad.top + plotH);
+            flowGrad.addColorStop(0, 'rgba(56, 189, 248, 0.25)');
+            flowGrad.addColorStop(1, 'rgba(56, 189, 248, 0.02)');
+            ctx.fillStyle = flowGrad;
+            ctx.fill();
+
+            // 6. 繪製下壺累積咖啡液重實線 (Server Yield)
+            ctx.beginPath();
+            series.forEach((pt, idx) => {
+                if (pt.t <= Math.min(maxT, simResult.drawdownTime)) {
+                    const x = toX(pt.t);
+                    const y = toYWeight(pt.yield);
+                    if (idx === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+            });
+            ctx.strokeStyle = '#d7a164';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            // 標示完萃斷水點
+            const endT = Math.min(maxT, simResult.drawdownTime);
+            const endX = toX(endT);
+            const endY = toYWeight(simResult.actualYield);
+
+            ctx.beginPath();
+            ctx.arc(endX, endY, 5.5, 0, Math.PI * 2);
+            ctx.fillStyle = '#f9f3eb';
+            ctx.fill();
+            ctx.strokeStyle = '#d7a164';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // 若正在執行實作手沖計時動畫，繪製紅色時間掃描線
+            if (state.isBrewing) {
+                const scanX = toX(state.simCurrentTime);
+                ctx.beginPath();
+                ctx.strokeStyle = '#f43f5e';
+                ctx.lineWidth = 2;
+                ctx.moveTo(scanX, pad.top);
+                ctx.lineTo(scanX, pad.top + plotH);
+                ctx.stroke();
+            }
+
+            // 完萃時間標籤
+            const endLabel = simResult.isClogged
+                ? `細粉堵水 >3:30`
+                : `完萃 ${formatTimeMMSS(simResult.drawdownTime)} (${Math.round(simResult.actualYield)}g)`;
+            ctx.font = 'bold 10px "JetBrains Mono", monospace';
+            const lw = ctx.measureText(endLabel).width + 10;
+            const lx = Math.min(width - pad.right - lw, Math.max(pad.left, endX - lw / 2));
+            const ly = Math.max(pad.top + 4, endY - 22);
+
+            ctx.fillStyle = 'rgba(11, 9, 8, 0.92)';
+            ctx.fillRect(lx, ly, lw, 16);
+            ctx.strokeStyle = '#d7a164';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(lx, ly, lw, 16);
+            ctx.fillStyle = '#f9f3eb';
+            ctx.textAlign = 'center';
+            ctx.fillText(endLabel, lx + lw / 2, ly + 11);
+
+            ctx.restore();
+
+            // 底部軸說明
+            ctx.fillStyle = 'rgba(249, 243, 235, 0.75)';
+            ctx.font = '11px "Noto Sans TC", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('手沖計時時間 Brew Time (秒) ➔', pad.left + plotW / 2, height - 6);
+        }
+
+        // 5.4 圖表三：六維度感官風味雷達圖
+        function drawFlavorRadar() {
+            const canvas = document.getElementById('flavorRadarCanvas');
+            const { ctx, width, height } = setupHiDPICanvas(canvas);
+            ctx.clearRect(0, 0, width, height);
+
+            const cx = width / 2;
+            const cy = height / 2 + 4;
+            const radius = Math.min(width, height) * 0.34;
+
+            const labels = [
+                { name: '果酸明亮', val: simResult.acidity, color: '#fbbf24' },
+                { name: '花果香氣', val: simResult.aroma, color: '#f472b6' },
+                { name: '焦糖甜感', val: simResult.sweetness, color: '#34d399' },
+                { name: '茶感乾淨', val: simResult.clarity, color: '#38bdf8' },
+                { name: '醇厚Body', val: simResult.body, color: '#d7a164' },
+                { name: '苦澀尾韻', val: simResult.bitterness, color: '#c084fc' }
+            ];
+
+            const numSides = labels.length;
+            const angleStep = (Math.PI * 2) / numSides;
+            const startAngle = -Math.PI / 2;
+
+            // 繪製同心六邊形網格
+            for (let level = 1; level <= 5; level++) {
+                const r = (radius / 5) * level;
+                ctx.beginPath();
+                for (let i = 0; i < numSides; i++) {
+                    const ang = startAngle + i * angleStep;
+                    const x = cx + Math.cos(ang) * r;
+                    const y = cy + Math.sin(ang) * r;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.strokeStyle = level === 5 ? 'rgba(215, 161, 100, 0.35)' : 'rgba(215, 161, 100, 0.14)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+
+            // 繪製軸線與文字
+            labels.forEach((item, i) => {
+                const ang = startAngle + i * angleStep;
+                const x = cx + Math.cos(ang) * radius;
+                const y = cy + Math.sin(ang) * radius;
+
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(x, y);
+                ctx.strokeStyle = 'rgba(215, 161, 100, 0.2)';
+                ctx.stroke();
+
+                const lx = cx + Math.cos(ang) * (radius + 24);
+                const ly = cy + Math.sin(ang) * (radius + 15) + 3;
+                ctx.font = 'bold 11px "Noto Sans TC", sans-serif';
+                ctx.fillStyle = item.color;
+                ctx.textAlign = 'center';
+                ctx.fillText(item.name, lx, ly);
+            });
+
+            // 繪製理想淺焙金杯參考六邊形 (虛線)
+            const idealVals = [76, 86, 86, 88, 68, 25];
+            ctx.beginPath();
+            idealVals.forEach((v, i) => {
+                const ang = startAngle + i * angleStep;
+                const r = (v / 100) * radius;
+                const x = cx + Math.cos(ang) * r;
+                const y = cy + Math.sin(ang) * r;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.closePath();
+            ctx.setLineDash([3, 3]);
+            ctx.strokeStyle = 'rgba(52, 211, 153, 0.45)';
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // 繪製當前風味六邊形
+            ctx.beginPath();
+            labels.forEach((item, i) => {
+                const ang = startAngle + i * angleStep;
+                const r = (item.val / 100) * radius;
+                const x = cx + Math.cos(ang) * r;
+                const y = cy + Math.sin(ang) * r;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(215, 161, 100, 0.32)';
+            ctx.fill();
+            ctx.strokeStyle = '#e4c49c';
+            ctx.lineWidth = 2.2;
+            ctx.stroke();
+
+            labels.forEach((item, i) => {
+                const ang = startAngle + i * angleStep;
+                const r = (item.val / 100) * radius;
+                const x = cx + Math.cos(ang) * r;
+                const y = cy + Math.sin(ang) * r;
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, Math.PI * 2);
+                ctx.fillStyle = item.color;
+                ctx.fill();
+                ctx.strokeStyle = '#0b0908';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            });
+        }
+
+        // ==========================================
+        // 6. V60 / 平底濾杯手沖視覺模擬器繪製
+        // ==========================================
+        function drawDripperSimulation(currentTime) {
+            const canvas = document.getElementById('dripperSimCanvas');
+            const { ctx, width, height } = setupHiDPICanvas(canvas);
+            ctx.clearRect(0, 0, width, height);
+
+            const cx = width / 2;
+            const tIdx = Math.min(simResult.timeSeries.length - 1, Math.max(0, Math.floor(currentTime)));
+            const pt = simResult.timeSeries[tIdx] || { poured: simResult.totalWater, yield: simResult.actualYield, flow: 0, slurry: 0 };
+
+            const isPouringActive = state.isBrewing && (
+                (currentTime >= 0 && currentTime <= 10) ||
+                (currentTime >= 30 && currentTime <= 72) ||
+                (currentTime >= 78 && currentTime <= 115)
+            );
+            const isBloomPhase = state.isBrewing && currentTime >= 0 && currentTime < 30;
+
+            // 更新左上角階段提示
+            const stageOverlay = document.getElementById('simStageOverlay');
+            if (!state.isBrewing) {
+                stageOverlay.textContent = '完萃預覽狀態';
+            } else if (currentTime < 30) {
+                stageOverlay.textContent = '階段 1：悶蒸排氣 (Bloom 0:00-0:30)';
+            } else if (currentTime < 75) {
+                stageOverlay.textContent = '階段 2：第一段繞圈注水 (0:30-1:15)';
+            } else if (currentTime < 115) {
+                stageOverlay.textContent = '階段 3：第二段柔水注水 (1:15-1:55)';
+            } else {
+                stageOverlay.textContent = '階段 4：粉床滴濾收尾 (Drawdown)';
+            }
+
+            // 1. 繪製上方手沖細口壺壺嘴與注水水柱
+            ctx.strokeStyle = '#a89f96';
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(cx + 52, 8);
+            ctx.quadraticCurveTo(cx + 28, 22, cx + 10, 14);
+            ctx.stroke();
+
+            const dripperTopY = 38;
+            const dripperBottomY = 104;
+            const topHalfW = 46;
+            const bottomHalfW = state.dripper === 'v60' ? 9 : 24;
+
+            // 若處於注水階段，繪製細口壺水柱
+            if (isPouringActive) {
+                const swing = Math.sin(currentTime * 5) * (state.pressure * 1.4);
+                const streamW = 1.5 + (state.pressure / 10) * 2.5;
+                ctx.beginPath();
+                ctx.moveTo(cx + 10, 14);
+                ctx.quadraticCurveTo(cx + swing * 0.5, 26, cx + swing, dripperTopY + 18);
+                ctx.strokeStyle = 'rgba(125, 211, 252, 0.85)';
+                ctx.lineWidth = streamW;
+                ctx.stroke();
+            }
+
+            // 2. 繪製濾杯內部咖啡粉床與水位
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(cx - topHalfW, dripperTopY);
+            ctx.lineTo(cx + topHalfW, dripperTopY);
+            ctx.lineTo(cx + bottomHalfW, dripperBottomY);
+            ctx.lineTo(cx - bottomHalfW, dripperBottomY);
+            ctx.closePath();
+            ctx.clip();
+
+            // 濾紙背景
+            ctx.fillStyle = '#e7dec8';
+            ctx.fillRect(cx - topHalfW, dripperTopY, topHalfW * 2, dripperBottomY - dripperTopY);
+
+            // 濾杯內熱水水位
+            const slurryLevelRatio = state.isBrewing ? Math.min(0.88, pt.slurry / 115) : 0.05;
+            const waterTopY = dripperBottomY - (dripperBottomY - dripperTopY) * Math.max(0.32, slurryLevelRatio);
+            if (state.isBrewing && pt.slurry > 2) {
+                ctx.fillStyle = 'rgba(180, 110, 55, 0.55)';
+                ctx.fillRect(cx - topHalfW, waterTopY, topHalfW * 2, dripperBottomY - waterTopY);
+            }
+
+            // 咖啡粉床 (悶蒸期會向上鼓起排氣 Dome)
+            const bedTopY = dripperBottomY - 24;
+            const bloomDome = isBloomPhase ? Math.sin((currentTime / 30) * Math.PI) * 11 : 2;
+            const roastBedColor = state.roast === 'light' ? '#7c4925' : state.roast === 'medium' ? '#593216' : '#381e0b';
+
+            ctx.beginPath();
+            ctx.moveTo(cx - topHalfW, bedTopY);
+            ctx.quadraticCurveTo(cx, bedTopY - bloomDome, cx + topHalfW, bedTopY);
+            ctx.lineTo(cx + bottomHalfW, dripperBottomY);
+            ctx.lineTo(cx - bottomHalfW, dripperBottomY);
+            ctx.closePath();
+            ctx.fillStyle = roastBedColor;
+            ctx.fill();
+
+            // 悶蒸氣泡繪製
+            if (isBloomPhase) {
+                ctx.fillStyle = 'rgba(249, 243, 235, 0.65)';
+                for (let b = -12; b <= 12; b += 6) {
+                    ctx.beginPath();
+                    ctx.arc(cx + b, bedTopY - bloomDome * 0.4, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            ctx.restore();
+
+            // 繪製濾杯外框與肋骨線條
+            ctx.beginPath();
+            ctx.moveTo(cx - topHalfW, dripperTopY);
+            ctx.lineTo(cx + topHalfW, dripperTopY);
+            ctx.lineTo(cx + bottomHalfW, dripperBottomY);
+            ctx.lineTo(cx - bottomHalfW, dripperBottomY);
+            ctx.closePath();
+            ctx.strokeStyle = 'rgba(215, 161, 100, 0.8)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // 濾杯底盤
+            ctx.fillStyle = '#4a3930';
+            ctx.fillRect(cx - 34, dripperBottomY, 68, 5);
+
+            // 3. 繪製底部滴落至下壺的咖啡液柱
+            const serverTopY = 114;
+            const serverBottomY = height - 10;
+            const serverTopW = 68;
+            const serverBottomW = 88;
+
+            const yieldRatio = Math.min(1.0, (state.isBrewing ? pt.yield : simResult.actualYield) / 340);
+            const liquidH = (serverBottomY - serverTopY - 8) * Math.max(0.12, yieldRatio);
+            const liquidTopY = serverBottomY - liquidH;
+
+            const activeFlow = state.isBrewing ? pt.flow : simResult.avgFlow;
+            if ((!state.isBrewing || activeFlow > 0.05) && (!state.isBrewing || currentTime < simResult.drawdownTime)) {
+                ctx.beginPath();
+                ctx.moveTo(cx, dripperBottomY + 5);
+                ctx.lineTo(cx, liquidTopY);
+                ctx.strokeStyle = state.roast === 'light' ? '#b8622a' : state.roast === 'medium' ? '#853f16' : '#4a2008';
+                ctx.lineWidth = Math.max(1.5, Math.min(4.5, activeFlow * 1.6));
+                ctx.stroke();
+            }
+
+            // 4. 繪製玻璃分享壺 (Coffee Server) 與茶湯色澤
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(cx - serverTopW / 2, serverTopY);
+            ctx.lineTo(cx + serverTopW / 2, serverTopY);
+            ctx.lineTo(cx + serverBottomW / 2, serverBottomY);
+            ctx.lineTo(cx - serverBottomW / 2, serverBottomY);
+            ctx.closePath();
+            ctx.clip();
+
+            // 根據 TDS 與烘焙度決定下壺咖啡液透光度與色澤
+            const tdsAlpha = Math.min(0.95, Math.max(0.55, (simResult.tds - 0.7) * 0.65));
+            const baseLiquidRGB = state.roast === 'light'
+                ? `rgba(175, 78, 28, ${tdsAlpha})`
+                : state.roast === 'medium'
+                ? `rgba(122, 48, 16, ${tdsAlpha})`
+                : `rgba(68, 26, 8, ${tdsAlpha})`;
+
+            ctx.fillStyle = baseLiquidRGB;
+            ctx.fillRect(cx - serverBottomW / 2, liquidTopY, serverBottomW, liquidH);
+
+            // 液面高光反光線
+            ctx.fillStyle = 'rgba(249, 243, 235, 0.25)';
+            ctx.fillRect(cx - serverBottomW / 2, liquidTopY, serverBottomW, 2.5);
+            ctx.restore();
+
+            // 下壺玻璃外框與把手
+            ctx.beginPath();
+            ctx.moveTo(cx - serverTopW / 2, serverTopY);
+            ctx.lineTo(cx - serverBottomW / 2, serverBottomY);
+            ctx.lineTo(cx + serverBottomW / 2, serverBottomY);
+            ctx.lineTo(cx + serverTopW / 2, serverTopY);
+            ctx.strokeStyle = 'rgba(249, 243, 235, 0.5)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // 分享壺右側握把
+            ctx.beginPath();
+            ctx.moveTo(cx + serverTopW / 2 + 2, serverTopY + 10);
+            ctx.quadraticCurveTo(cx + serverBottomW / 2 + 18, (serverTopY + serverBottomY) / 2, cx + serverBottomW / 2 - 2, serverBottomY - 14);
+            ctx.strokeStyle = 'rgba(249, 243, 235, 0.4)';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+        }
+
+        // 啟動 / 停止手沖實作計時模擬
+        function toggleBrewSimulation() {
+            const btnText = document.getElementById('startBrewBtnText');
+            const badge = document.getElementById('brewStateBadge');
+
+            if (state.isBrewing) {
+                cancelAnimationFrame(state.simAnimId);
+                state.isBrewing = false;
+                btnText.textContent = '開始實作手沖計時';
+                badge.textContent = '待機預覽中';
+                badge.className = 'text-[11px] font-mono px-2 py-0.5 rounded bg-roast-800 text-ambercup-300 border border-roast-700';
+                updateUI();
+                return;
+            }
+
+            state.isBrewing = true;
+            state.simCurrentTime = 0;
+            btnText.textContent = '停止手沖模擬';
+            badge.textContent = '手沖計時萃取中...';
+            badge.className = 'text-[11px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse';
+
+            let lastTime = performance.now();
+            const targetDuration = simResult.drawdownTime;
+
+            function step(now) {
+                if (!state.isBrewing) return;
+                const elapsed = (now - lastTime) / 1000;
+                lastTime = now;
+
+                // 16 倍速流暢模擬，讓使用者在約 8~10 秒內完整觀察 2 分鐘的三段式手沖過程
+                state.simCurrentTime += elapsed * 16.0;
+
+                if (state.simCurrentTime >= targetDuration) {
+                    state.simCurrentTime = targetDuration;
+                    state.isBrewing = false;
+                    btnText.textContent = '重新實作手沖計時';
+                    badge.textContent = '✓ 滴濾完成';
+                    badge.className = 'text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+                    updateUI();
+                    return;
+                }
+
+                const idx = Math.min(simResult.timeSeries.length - 1, Math.floor(state.simCurrentTime));
+                const pt = simResult.timeSeries[idx] || { poured: 0, yield: 0 };
+                document.getElementById('liveTimerText').textContent = formatTimeMMSS(state.simCurrentTime);
+                document.getElementById('livePouredText').textContent = pt.poured.toFixed(1);
+                document.getElementById('liveYieldText').textContent = pt.yield.toFixed(1);
+
+                drawDripperSimulation(state.simCurrentTime);
+                drawFlowChart();
+
+                state.simAnimId = requestAnimationFrame(step);
+            }
+
+            state.simAnimId = requestAnimationFrame(step);
+        }
+
+        // ==========================================
+        // 7. 烘焙度、濾杯與五組實驗情境快速切換
+        // ==========================================
+        function setRoast(roastLevel) {
+            state.roast = roastLevel;
+            ['light', 'medium', 'dark'].forEach(r => {
+                const btn = document.getElementById(`roastBtn-${r}`);
+                if (r === roastLevel) {
+                    btn.className = 'py-2 px-2 rounded-lg text-xs font-bold border border-ambercup-400 bg-ambercup-500/20 text-ambercup-100 transition flex flex-col items-center';
+                } else {
+                    btn.className = 'py-2 px-2 rounded-lg text-xs font-medium border border-roast-700 bg-roast-800 text-ambercup-200/80 transition flex flex-col items-center';
+                }
+            });
+            updateUI();
+        }
+
+        function setDripper(dripperType) {
+            state.dripper = dripperType;
+            ['v60', 'kalita'].forEach(d => {
+                const btn = document.getElementById(`dripperBtn-${d}`);
+                if (d === dripperType) {
+                    btn.className = 'py-2 px-2.5 rounded-lg text-xs font-bold border border-ambercup-400 bg-ambercup-500/20 text-ambercup-100 transition flex items-center justify-center gap-1.5';
+                } else {
+                    btn.className = 'py-2 px-2.5 rounded-lg text-xs font-medium border border-roast-700 bg-roast-800 text-ambercup-200/80 transition flex items-center justify-center gap-1.5';
+                }
+            });
+            updateUI();
+        }
+
+        function applyPreset(presetKey) {
+            if (state.isBrewing) toggleBrewSimulation();
+
+            const presets = {
+                // 1. 淺焙花果金杯 (1:16 / 92°C)
+                floralGolden:   { grind: 5.5, temp: 92.0, pressure: 5.0, dose: 15.0, ratio: 16.0, roast: 'light',  dripper: 'v60' },
+                // 2. 經典三段平衡 (1:15.5 / 90°C)
+                classicBalance: { grind: 5.6, temp: 90.0, pressure: 4.8, dose: 16.0, ratio: 15.5, roast: 'medium', dripper: 'kalita' },
+                // 3. 過細高溫堵水過萃 (苦澀咬喉)
+                clogBitter:     { grind: 2.4, temp: 95.0, pressure: 8.6, dose: 16.0, ratio: 16.5, roast: 'dark',   dripper: 'kalita' },
+                // 4. 粗磨低溫快沖 (水感尖酸)
+                coarseSour:     { grind: 8.6, temp: 85.5, pressure: 2.4, dose: 15.0, ratio: 16.0, roast: 'light',  dripper: 'v60' },
+                // 5. 日式急冷冰手沖 (高濃萃基底 1:13)
+                icedPourOver:   { grind: 4.6, temp: 92.5, pressure: 6.2, dose: 20.0, ratio: 13.0, roast: 'light',  dripper: 'v60' }
+            };
+
+            const p = presets[presetKey];
+            if (!p) return;
+
+            state.grind = p.grind;
+            state.temp = p.temp;
+            state.pressure = p.pressure;
+            state.dose = p.dose;
+            state.ratio = p.ratio;
+
+            grindSlider.value = p.grind;
+            tempSlider.value = p.temp;
+            pressureSlider.value = p.pressure;
+            doseSlider.value = p.dose;
+            ratioSlider.value = p.ratio;
+
+            setRoast(p.roast);
+            setDripper(p.dripper);
+        }
+
+        // 綁定滑桿即時更新事件
+        grindSlider.addEventListener('input', e => { state.grind = parseFloat(e.target.value); updateUI(); });
+        tempSlider.addEventListener('input', e => { state.temp = parseFloat(e.target.value); updateUI(); });
+        pressureSlider.addEventListener('input', e => { state.pressure = parseFloat(e.target.value); updateUI(); });
+        doseSlider.addEventListener('input', e => { state.dose = parseFloat(e.target.value); updateUI(); });
+        ratioSlider.addEventListener('input', e => { state.ratio = parseFloat(e.target.value); updateUI(); });
+
+        window.addEventListener('resize', () => {
+            updateUI();
+        });
+
+        window.onload = function() {
+            updateUI();
+        };
+    </script>
 </body>
 </html>
